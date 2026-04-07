@@ -1,31 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import HelloWorld from './components/HelloWorld.vue';
-
-const msg = ref('MLB Field - Vue 3 + TypeScript');
+import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 </script>
 
 <template>
-  <header>
-    <h1>{{ msg }}</h1>
-  </header>
-  <main>
-    <HelloWorld msg="Welcome to MLB Field Project" />
-  </main>
+  <v-app>
+    <v-app-bar color="primary" dark>
+      <v-app-bar-title>⚾ MLB Ballpark Tour Planner</v-app-bar-title>
+    </v-app-bar>
+
+    <v-main class="pa-4" style="padding-top: 80px !important">
+      <v-container>
+        <v-row justify="center">
+          <v-col cols="12" md="8" lg="6">
+            <DateRangePicker
+              @range-confirmed="(r) => console.log('confirmed', r)"
+              @range-cleared="() => console.log('cleared')"
+            />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  padding: 1.5rem;
-  text-align: center;
-}
-
-header h1 {
-  color: #0052cc;
-}
-
-main {
-  margin: 2rem 0;
-}
-</style>
+<style scoped></style>
