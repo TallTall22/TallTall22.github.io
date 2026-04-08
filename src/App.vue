@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import DateRangePicker from './components/control-panel/DateRangePicker.vue';
+import StadiumSelector from './components/control-panel/StadiumSelector.vue';
 </script>
 
 <template>
@@ -12,6 +13,12 @@ import DateRangePicker from './components/control-panel/DateRangePicker.vue';
       <v-container>
         <v-row justify="center">
           <v-col cols="12" md="8" lg="6">
+            <!-- F-02: Home Stadium Selection -->
+            <StadiumSelector
+              class="mb-4"
+            />
+
+            <!-- F-01: Date Range -->
             <DateRangePicker
               @range-confirmed="(r) => console.log('confirmed', r)"
               @range-cleared="() => console.log('cleared')"

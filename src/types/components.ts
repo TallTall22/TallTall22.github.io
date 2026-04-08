@@ -1,5 +1,16 @@
 // src/types/components.ts
-import type { ValidationResult, ISODateString } from './models';
+import type { ValidationResult, ISODateString, Stadium } from './models';
+
+// ── StadiumSelector ───────────────────────────────────────────
+export interface StadiumSelectorOption {
+  label:   string;
+  stadium: Stadium;
+}
+
+export interface StadiumSelectorProps {
+  disabled?: boolean;
+  label?:    string;
+}
 
 // ── DateRangePickerStart ──────────────────────────────────────
 export interface DateRangePickerStartProps {

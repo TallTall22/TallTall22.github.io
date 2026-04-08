@@ -18,7 +18,10 @@ export function todayISO(): ISODateString {
 export function addDays(iso: ISODateString, days: number): ISODateString {
   const d = toDate(iso);
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 export function diffDays(from: ISODateString, to: ISODateString): number {

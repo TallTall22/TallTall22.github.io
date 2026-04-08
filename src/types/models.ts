@@ -81,6 +81,16 @@ export interface Trip {
   qualityScore:  number;
 }
 
+export type StadiumLoadErrorCode =
+  | 'FETCH_FAILED'
+  | 'PARSE_ERROR'
+  | 'EMPTY_DATA';
+
+export interface StadiumLoadResult {
+  stadiums: Stadium[];
+  error:    StadiumLoadErrorCode | null;
+}
+
 export interface UiState {
   isLoading:      boolean;
   error?:         string;

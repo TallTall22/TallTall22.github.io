@@ -6,11 +6,13 @@ import type { ISODateString, Trip } from '@/types';
 export const useTripStore = defineStore('trip', () => {
   const startDate = ref<ISODateString | null>(null);
   const endDate = ref<ISODateString | null>(null);
+  const homeStadiumId = ref<string | null>(null);
   const selectedTrip = ref<Trip | null>(null);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
   const hasDateRange = computed(() => startDate.value !== null && endDate.value !== null);
+  const hasHomeStadium = computed(() => homeStadiumId.value !== null);
 
   function setStartDate(date: ISODateString | null): void {
     startDate.value = date;
@@ -28,6 +30,10 @@ export const useTripStore = defineStore('trip', () => {
     endDate.value = null;
   }
 
+  function setHomeStadium(id: string | null): void {
+    homeStadiumId.value = id;
+  }
+
   return {
     startDate,
     endDate,
@@ -38,5 +44,8 @@ export const useTripStore = defineStore('trip', () => {
     setStartDate,
     setEndDate,
     clearDates,
+    homeStadiumId,
+    hasHomeStadium,
+    setHomeStadium,
   };
 });
