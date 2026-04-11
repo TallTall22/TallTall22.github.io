@@ -1,6 +1,14 @@
 // src/services/stadiumService.ts
 import type { Stadium, StadiumLoadResult } from '@/types/models';
 
+type StadiumJsonLoader = () => Promise<{ default: unknown }>;
+let _jsonLoader: StadiumJsonLoader = () => import('@/assets/data/stadiums.json');
+
+/** Overrides the JSON loader for unit testing. Restore with _setStadiumJsonLoader(undefined). */
+export function _setStadiumJsonLoader(loader: StadiumJsonLoader | undefined): void {
+  _jsonLoader = loader ?? (() => import('@/assets/data/stadiums.json'));
+}
+
 /**
  * Module-level cache — stadiums.json is a static bundle asset.
  * Parse and validate once; reuse across all callers (useStadiumSelector,
@@ -42,7 +50,7 @@ export async function loadStadiums(): Promise<StadiumLoadResult> {
   }
 
   try {
-    const module = await import('@/assets/data/stadiums.json');
+    const module = await _jsonLoader();
     const raw: unknown = module.default;
 
     if (!Array.isArray(raw)) {
