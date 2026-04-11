@@ -125,6 +125,16 @@ describe('computeTrip()', () => {
     expect(result.trip?.endDate).toBe('2026-06-15');
   });
 
+  it('returns EMPTY_ITINERARY when startDate is after endDate', async () => {
+    const result = await computeTrip(STUB_GAMES, {
+      startDate:     '2026-06-20',
+      endDate:       '2026-06-15', // end before start → empty loop
+      homeStadiumId: 'NYY',
+    });
+    expect(result.error).toBe('EMPTY_ITINERARY');
+    expect(result.trip).toBeNull();
+  });
+
   it('trip.itinerary has one entry when range is one day', async () => {
     const result = await computeTrip(STUB_GAMES, {
       startDate:     '2026-06-15',

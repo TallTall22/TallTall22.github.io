@@ -1,11 +1,12 @@
 // src/composables/__tests__/useRoutingAlgorithm.integration.spec.ts
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { defineComponent, nextTick } from 'vue';
+import { defineComponent, ref, nextTick } from 'vue';
 import { useRoutingAlgorithm } from '@/composables/useRoutingAlgorithm';
 import { useTripStore } from '@/stores/tripStore';
 import type { RoutingResult, Game } from '@/types/models';
+import type { Ref } from 'vue';
 
 // ── visualViewport polyfill (required by Vuetify in jsdom) ───────────────────
 beforeAll(() => {
@@ -61,34 +62,26 @@ vi.mock('@/services/routingService', () => ({
   computeTrip: vi.fn(),
 }));
 
-vi.mock('@/services/gameService', () => ({
-  loadGames: vi.fn().mockResolvedValue({ games: [makeGame()], error: null }),
-}));
-
-vi.mock('@/assets/data/stadiums.json', () => ({ default: [] }));
-
 import { computeTrip } from '@/services/routingService';
-import { loadGames } from '@/services/gameService';
 const mockComputeTrip = vi.mocked(computeTrip);
-const mockLoadGames   = vi.mocked(loadGames);
 
 // ── Mount helper ──────────────────────────────────────────────────────────────
 
-function mountWithComposable() {
+/**
+ * Mounts useRoutingAlgorithm with an externally controlled filteredGames ref.
+ * This avoids double-instantiating useGameFilter (P1-7) and lets tests
+ * trigger the watcher directly by setting gamesRef.value.
+ */
+function mountWithComposable(initialGames: Game[] = []) {
+  const gamesRef = ref<Game[]>(initialGames);
+
   const Wrapper = defineComponent({
-    setup() { return useRoutingAlgorithm(); },
+    setup() { return useRoutingAlgorithm(gamesRef as Ref<Game[]>); },
     template: '<div />',
   });
-  return mount(Wrapper, { global: { plugins: [createPinia()] } });
-}
 
-/** Flush all pending microtasks and a macrotask. */
-async function flushAll(): Promise<void> {
-  await nextTick();
-  await nextTick();
-  await nextTick();
-  await new Promise<void>((r) => setTimeout(r, 0));
-  await nextTick();
+  const wrapper = mount(Wrapper, { global: { plugins: [createPinia()] } });
+  return { wrapper, gamesRef };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -96,10 +89,7 @@ async function flushAll(): Promise<void> {
 describe('useRoutingAlgorithm (integration)', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
-    // clearAllMocks resets call history but keeps mock implementations —
-    // avoids the "loadGames returns undefined" unhandled error from resetAllMocks.
     vi.clearAllMocks();
-    mockLoadGames.mockResolvedValue({ games: [makeGame()], error: null });
     mockComputeTrip.mockResolvedValue(STUB_TRIP_RESULT);
   });
 
@@ -107,7 +97,7 @@ describe('useRoutingAlgorithm (integration)', () => {
 
   describe('initial state', () => {
     it('starts with null generatedTrip, isRouting=false, no error', () => {
-      const wrapper = mountWithComposable();
+      const { wrapper } = mountWithComposable();
       expect(wrapper.vm.generatedTrip).toBeNull();
       expect(wrapper.vm.isRouting).toBe(false);
       expect(wrapper.vm.routingError).toBeNull();
@@ -115,7 +105,7 @@ describe('useRoutingAlgorithm (integration)', () => {
 
     it('does NOT call computeTrip on mount (non-immediate watcher)', async () => {
       mountWithComposable();
-      await flushAll();
+      await flushPromises();
       expect(mockComputeTrip).not.toHaveBeenCalled();
     });
   });
@@ -124,15 +114,14 @@ describe('useRoutingAlgorithm (integration)', () => {
 
   describe('input guard', () => {
     it('does not route when homeStadiumId is missing', async () => {
-      const wrapper = mountWithComposable();
-      const store   = useTripStore();
+      const { wrapper, gamesRef } = mountWithComposable();
+      const store = useTripStore();
 
       store.setStartDate('2026-06-15');
       store.setEndDate('2026-06-20');
-      // homeStadiumId NOT set
-
-      store.requestTripGeneration();
-      await flushAll();
+      // homeStadiumId NOT set — trigger watcher directly
+      gamesRef.value = [makeGame()];
+      await flushPromises();
 
       expect(mockComputeTrip).not.toHaveBeenCalled();
       expect(wrapper.vm.isRouting).toBe(false);
@@ -147,22 +136,45 @@ describe('useRoutingAlgorithm (integration)', () => {
         trip: null, error: 'NO_GAMES', totalGamesAttended: 0, totalTravelDays: 0,
       });
 
-      const wrapper = mountWithComposable();
-      const store   = useTripStore();
+      const { wrapper, gamesRef } = mountWithComposable();
+      const store = useTripStore();
 
       store.setStartDate('2026-06-15');
       store.setEndDate('2026-06-15');
       store.setHomeStadium('NYY');
-      store.requestTripGeneration();
 
-      await flushAll();
+      // Trigger the watcher
+      gamesRef.value = [makeGame()];
+      await flushPromises();
 
-      if (mockComputeTrip.mock.calls.length > 0) {
-        expect(wrapper.vm.routingError).toBe('NO_GAMES');
-        expect(wrapper.vm.generatedTrip).toBeNull();
-        expect(store.selectedTrip).toBeNull();
-        expect(wrapper.vm.isRouting).toBe(false);
-      }
+      // Unconditional assertions — will fail if composable is broken
+      expect(mockComputeTrip).toHaveBeenCalledOnce();
+      expect(wrapper.vm.routingError).toBe('NO_GAMES');
+      expect(wrapper.vm.generatedTrip).toBeNull();
+      expect(store.selectedTrip).toBeNull();
+      expect(wrapper.vm.isRouting).toBe(false);
+    });
+  });
+
+  // ── happy path ──────────────────────────────────────────────────────────────
+
+  describe('happy path', () => {
+    it('writes generatedTrip and store.selectedTrip on success', async () => {
+      const { wrapper, gamesRef } = mountWithComposable();
+      const store = useTripStore();
+
+      store.setStartDate('2026-06-15');
+      store.setEndDate('2026-06-15');
+      store.setHomeStadium('NYY');
+
+      gamesRef.value = [makeGame()];
+      await flushPromises();
+
+      expect(mockComputeTrip).toHaveBeenCalledOnce();
+      expect(wrapper.vm.generatedTrip).toStrictEqual(STUB_TRIP_RESULT.trip);
+      expect(store.selectedTrip).toStrictEqual(STUB_TRIP_RESULT.trip);
+      expect(wrapper.vm.isRouting).toBe(false);
+      expect(wrapper.vm.routingError).toBeNull();
     });
   });
 
@@ -175,13 +187,13 @@ describe('useRoutingAlgorithm (integration)', () => {
         new Promise<RoutingResult>((r) => { resolveCompute = r; }),
       );
 
-      const wrapper = mountWithComposable();
-      const store   = useTripStore();
+      const { wrapper, gamesRef } = mountWithComposable();
+      const store = useTripStore();
 
       store.setStartDate('2026-06-15');
       store.setEndDate('2026-06-15');
       store.setHomeStadium('NYY');
-      store.requestTripGeneration();
+      gamesRef.value = [makeGame()];
 
       await nextTick();
 
@@ -190,7 +202,7 @@ describe('useRoutingAlgorithm (integration)', () => {
 
       // Now resolve
       resolveCompute(STUB_TRIP_RESULT);
-      await flushAll();
+      await flushPromises();
 
       // isMounted guard must prevent writing to store
       expect(store.selectedTrip).toBeNull();
@@ -201,17 +213,17 @@ describe('useRoutingAlgorithm (integration)', () => {
 
   describe('race condition guard', () => {
     it('isRouting resets to false when guard fires with missing inputs', async () => {
-      const wrapper = mountWithComposable();
-      const store   = useTripStore();
+      const { wrapper, gamesRef } = mountWithComposable();
+      const store = useTripStore();
 
       // Set dates but no homeStadiumId
       store.setStartDate('2026-06-15');
       store.setEndDate('2026-06-20');
-      store.requestTripGeneration();
-
-      await flushAll();
+      gamesRef.value = [makeGame()];
+      await flushPromises();
 
       expect(wrapper.vm.isRouting).toBe(false);
     });
   });
 });
+

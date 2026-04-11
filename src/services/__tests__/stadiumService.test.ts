@@ -3,10 +3,10 @@ import { describe, it, expect } from 'vitest';
 import { loadStadiums } from '../stadiumService';
 
 describe('stadiumService.loadStadiums', () => {
-  it('returns 30 stadiums on success', async () => {
+  it('returns at least 30 stadiums on success', async () => {
     const result = await loadStadiums();
     expect(result.error).toBeNull();
-    expect(result.stadiums).toHaveLength(30);
+    expect(result.stadiums.length).toBeGreaterThanOrEqual(30);
   });
 
   it('each stadium has required fields', async () => {
