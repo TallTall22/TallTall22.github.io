@@ -115,7 +115,8 @@ export function useGameFilter(): UseGameFilterReturn {
   let isMounted = true;
   onBeforeUnmount(() => {
     isMounted = false;
-    // stopWatcher() is called automatically by Vue when component unmounts
+    // The anonymous watch() registered in setup() is auto-stopped by Vue on unmount.
+    // The isMounted flag guards in-flight async operations.
   });
 
   async function runFilter(requestId: number): Promise<void> {

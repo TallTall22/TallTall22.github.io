@@ -61,24 +61,23 @@ export function useQuickStartPresets(): UseQuickStartPresetsReturn {
   });
 
   // DEV-only: validate preset stadium IDs against loaded stadiums data
-  if (import.meta.env.DEV) {
-    onMounted(async () => {
-      if (devValidationDone) return;
-      devValidationDone = true;
-      const result = await loadStadiums();
-      if (result.error !== null) return; // can't validate without data
-      const loadedIds = new Set(result.stadiums.map((s) => s.id));
-      for (const preset of QUICK_START_PRESETS) {
-        if (!loadedIds.has(preset.startStadiumId)) {
-          console.warn(
-            `[F-03] Preset "${preset.name}" has startStadiumId "${preset.startStadiumId}" ` +
-            `which does not match any loaded Stadium.id. ` +
-            `Check src/data/presets.ts and src/assets/data/stadiums.json.`,
-          );
-        }
+  onMounted(async () => {
+    if (!import.meta.env.DEV) return;
+    if (devValidationDone) return;
+    devValidationDone = true;
+    const result = await loadStadiums();
+    if (result.error !== null) return; // can't validate without data
+    const loadedIds = new Set(result.stadiums.map((s) => s.id));
+    for (const preset of QUICK_START_PRESETS) {
+      if (!loadedIds.has(preset.startStadiumId)) {
+        console.warn(
+          `[F-03] Preset "${preset.name}" has startStadiumId "${preset.startStadiumId}" ` +
+          `which does not match any loaded Stadium.id. ` +
+          `Check src/data/presets.ts and src/assets/data/stadiums.json.`,
+        );
       }
-    });
-  }
+    }
+  });
 
   function applyPreset(preset: QuickStartPreset): PresetAppliedEvent {
     isApplyingPreset = true;
