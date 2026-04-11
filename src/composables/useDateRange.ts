@@ -1,5 +1,5 @@
 // src/composables/useDateRange.ts
-import { computed } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTripStore } from '@/stores/tripStore';
 import type { ValidationResult, ISODateString } from '@/types';
@@ -72,7 +72,18 @@ export function useDateRange() {
   const store = useTripStore();
   const { startDate, endDate } = storeToRefs(store);
 
-  const today = computed(() => todayISO());
+  const today = ref<ISODateString>(todayISO());
+  let _todayInterval: ReturnType<typeof setInterval> | null = null;
+
+  onMounted(() => {
+    _todayInterval = setInterval(() => { today.value = todayISO(); }, 60_000);
+  });
+  onBeforeUnmount(() => {
+    if (_todayInterval !== null) {
+      clearInterval(_todayInterval);
+      _todayInterval = null;
+    }
+  });
 
   const maxEndDate = computed<ISODateString | null>(() =>
     startDate.value ? addDays(startDate.value, MAX_TRIP_DAYS) : null
@@ -89,7 +100,7 @@ export function useDateRange() {
   function onEndDateChange(date: ISODateString | null): void {
     if (date === null) { store.setEndDate(null); return; }
     const result = validateDateRange(startDate.value, date, today.value);
-    if (result.valid || result.error === 'MISSING_END') {
+    if (result.valid) {
       store.setEndDate(date);
     }
   }
