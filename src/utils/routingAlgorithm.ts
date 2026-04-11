@@ -13,8 +13,12 @@ import type {
   ISODateString,
 } from '@/types/models';
 
-const EARTH_RADIUS_KM = 6_371;
-const MAX_REACH_KM    = 5_000; // any CONUS + Toronto stadium reachable in 1 flight day
+const EARTH_RADIUS_KM    = 6_371;
+const MAX_REACH_KM       = 5_000; // any CONUS + Toronto stadium reachable in 1 flight day
+const DRIVE_MAX_KM       = 200;   // threshold below which driving is faster than flying
+const DRIVE_SPEED_KMH    = 100;   // approximate driving speed (km/h)
+const FLIGHT_SPEED_KMH   = 800;   // approximate cruising speed (km/h)
+const FLIGHT_OVERHEAD_MIN = 120;  // airport overhead: check-in + boarding + deplaning (min)
 
 function toRadians(deg: number): number {
   return (deg * Math.PI) / 180;
@@ -83,9 +87,9 @@ export function buildStadiumByIdMap(stadiums: Stadium[]): Map<string, Stadium> {
  * < 1 km → 0 min; < 200 km → drive estimate; else → flight estimate.
  */
 export function estimateTravelMinutes(distanceKm: number): number {
-  if (distanceKm < 1)   return 0;
-  if (distanceKm < 200) return Math.round((distanceKm / 100) * 60); // ~60 min/100 km driving
-  return Math.round((distanceKm / 800) * 60 + 120);                 // flight: 800 km/h + 2 hr overhead
+  if (distanceKm < 1)          return 0;
+  if (distanceKm < DRIVE_MAX_KM) return Math.round((distanceKm / DRIVE_SPEED_KMH) * 60);
+  return Math.round((distanceKm / FLIGHT_SPEED_KMH) * 60 + FLIGHT_OVERHEAD_MIN);
 }
 
 /**
@@ -197,8 +201,9 @@ export function buildItinerary(
 
 /** Assembles a Trip object from a completed itinerary. */
 export function assembleTripFromItinerary(
-  itinerary: TripDay[],
-  options:   RoutingOptions,
+  itinerary:  TripDay[],
+  options:    RoutingOptions,
+  generateId: () => string = () => crypto.randomUUID(),
 ): Trip {
   const gameDays      = itinerary.filter((d): d is GameDay => d.type === 'game_day');
   const totalDistance = gameDays.reduce((sum, d) => sum + (d.distanceFromPrevious ?? 0), 0);
@@ -207,7 +212,7 @@ export function assembleTripFromItinerary(
     : 0;
 
   return {
-    tripId:        crypto.randomUUID(),
+    tripId:        generateId(),
     createdAt:     formatDateLocal(new Date()),
     startDate:     options.startDate,
     endDate:       options.endDate,

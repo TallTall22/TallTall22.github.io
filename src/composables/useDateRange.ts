@@ -39,8 +39,8 @@ export function diffDays(from: ISODateString, to: ISODateString): number {
 export function validateDateRange(
   startDate: ISODateString | null,
   endDate:   ISODateString | null,
+  today:     ISODateString = todayISO(),
 ): ValidationResult {
-  const today = todayISO();
 
   if (!startDate) {
     return { valid: false, error: 'MISSING_START', dayCount: 0, message: '請選擇開始日期' };
@@ -79,7 +79,7 @@ export function useDateRange() {
   );
 
   const validation = computed<ValidationResult>(() =>
-    validateDateRange(startDate.value, endDate.value)
+    validateDateRange(startDate.value, endDate.value, today.value)
   );
 
   function onStartDateChange(date: ISODateString | null): void {
@@ -88,7 +88,7 @@ export function useDateRange() {
 
   function onEndDateChange(date: ISODateString | null): void {
     if (date === null) { store.setEndDate(null); return; }
-    const result = validateDateRange(startDate.value, date);
+    const result = validateDateRange(startDate.value, date, today.value);
     if (result.valid || result.error === 'MISSING_END') {
       store.setEndDate(date);
     }

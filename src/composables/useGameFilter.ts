@@ -28,10 +28,12 @@ export function filterByDateRange(
 }
 
 /**
- * F-04.2: Keep home games only.
- * Guards against empty homeTeamId (data integrity defense).
+ * F-04.2: Data integrity guard — drop records with missing or empty homeTeamId.
+ * In a well-formed MLB schedule every game has a homeTeamId, so this rarely
+ * removes anything; it prevents downstream NaN from haversineDistance on
+ * corrupt data entries.
  */
-export function filterHomeOnly(games: Game[]): Game[] {
+export function filterValidHomeGames(games: Game[]): Game[] {
   return games.filter(
     (g) => typeof g.homeTeamId === 'string' && g.homeTeamId.length > 0,
   );
@@ -75,7 +77,7 @@ export function applyGameFilters(
   allGames: Game[],
   options: GameFilterOptions,
 ): FilteredGamesResult {
-  const homeOnly                      = filterHomeOnly(allGames);
+  const homeOnly                      = filterValidHomeGames(allGames);
   const dateFiltered                  = filterByDateRange(homeOnly, options);
   const { unique, duplicatesRemoved } = deduplicateByGameId(dateFiltered);
   const sorted                        = sortByDate(unique);
@@ -111,7 +113,10 @@ export function useGameFilter(): UseGameFilterReturn {
   const isLoading     = ref<boolean>(false);
 
   let isMounted = true;
-  onBeforeUnmount(() => { isMounted = false; });
+  onBeforeUnmount(() => {
+    isMounted = false;
+    // stopWatcher() is called automatically by Vue when component unmounts
+  });
 
   async function runFilter(requestId: number): Promise<void> {
     // Guard: if dates are incomplete and this is the latest request, reset loading state
@@ -157,13 +162,11 @@ export function useGameFilter(): UseGameFilterReturn {
   }
 
   // F-03 → F-04 hook: watch tripGenerationRequestId, non-immediate (id=0 is initial value)
-  const stopWatcher = watch(
+  watch(
     tripGenerationRequestId,
     (newId) => { void runFilter(newId); },
     { immediate: false },
   );
-
-  onBeforeUnmount(() => { stopWatcher(); });
 
   return { filteredGames, filterResult, loadError, isLoading };
 }
