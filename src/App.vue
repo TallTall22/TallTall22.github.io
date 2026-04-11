@@ -1,19 +1,34 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 import StadiumSelector from './components/control-panel/StadiumSelector.vue';
 import QuickStartPresets from './components/control-panel/QuickStartPresets.vue';
 import { useTripStore } from '@/stores/tripStore';
 import { useGameFilter } from '@/composables/useGameFilter';
 import { useRoutingAlgorithm } from '@/composables/useRoutingAlgorithm';
+import type { RoutingAlgorithmErrorCode } from '@/types/models';
 
 const store = useTripStore();
 
 // F-04: game filtering pipeline — watches tripGenerationRequestId
-const { filteredGames } = useGameFilter();
+const { filteredGames, isLoading: isFiltering } = useGameFilter();
 
 // F-05: routing algorithm — watches filteredGames, writes store.selectedTrip
 // Passed filteredGames explicitly to prevent a second useGameFilter instance.
 const { isRouting, routingError } = useRoutingAlgorithm(filteredGames);
+
+const isBusy = computed(() => isFiltering.value || isRouting.value);
+
+const routingErrorMessage = computed<string | null>(() => {
+  if (!routingError.value) return null;
+  const messages: Record<RoutingAlgorithmErrorCode, string> = {
+    NO_GAMES:            '選定期間內找不到可用的比賽，請調整日期範圍',
+    NO_HOME_STADIUM:     '起點球場設定無效，請重新選擇',
+    STADIUM_LOAD_FAILED: '球場資料載入失敗，請重新整理頁面',
+    EMPTY_ITINERARY:     '無法生成行程，請縮短旅程天數後再試',
+  };
+  return messages[routingError.value];
+});
 
 // Wire DateRangePicker range-confirmed → trigger routing pipeline
 function onRangeConfirmed(_range: { startDate: string; endDate: string }): void {
@@ -34,6 +49,7 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
             <!-- F-03: Quick Start Presets -->
             <QuickStartPresets
               class="mb-4"
+              :disabled="isBusy"
             />
 
             <!-- F-02: Home Stadium Selection -->
@@ -50,8 +66,8 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
             <div v-if="isRouting" class="mt-4 text-center text-medium-emphasis">
               正在計算最佳路線...
             </div>
-            <div v-else-if="routingError" class="mt-4 text-center text-error">
-              路線計算失敗：{{ routingError }}
+            <div v-else-if="routingErrorMessage" class="mt-4 text-center text-error">
+              路線計算失敗：{{ routingErrorMessage }}
             </div>
           </v-col>
         </v-row>
