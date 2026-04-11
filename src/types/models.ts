@@ -40,15 +40,26 @@ export interface Game {
   };
 }
 
-export interface TripDay {
+interface TripDayBase {
   dayNumber:             number;
   date:                  ISODateString;
-  type:                  'game_day' | 'travel_day';
-  stadiumId?:            string;
-  game?:                 Game;
   distanceFromPrevious?: number;
   estimatedTravelTime?:  number;
 }
+
+export interface GameDay extends TripDayBase {
+  type:      'game_day';
+  stadiumId: string;
+  game:      Game;
+}
+
+export interface TravelDay extends TripDayBase {
+  type:       'travel_day';
+  stadiumId?: string;
+  game?:      never;
+}
+
+export type TripDay = GameDay | TravelDay;
 
 export interface Stadium {
   id:              string;
@@ -89,6 +100,34 @@ export type StadiumLoadErrorCode =
 export interface StadiumLoadResult {
   stadiums: Stadium[];
   error:    StadiumLoadErrorCode | null;
+}
+
+// ── Game 服務層型別 ──────────────────────────────────────────────
+
+export type GameLoadErrorCode =
+  | 'FETCH_FAILED'   // dynamic import 失敗（網路/bundle 錯誤）
+  | 'PARSE_ERROR'    // JSON 格式不符合 Game[] 結構
+  | 'EMPTY_DATA';    // 陣列為空
+
+export interface GameLoadResult {
+  games: Game[];
+  error: GameLoadErrorCode | null;
+}
+
+// ── 篩選選項（由呼叫端傳入，純函式用） ──────────────────────────
+
+export interface GameFilterOptions {
+  startDate: ISODateString;   // inclusive
+  endDate:   ISODateString;   // inclusive
+}
+
+// ── 篩選結果統計（除 games 本體外附帶 debug 資訊） ────────────────
+
+export interface FilteredGamesResult {
+  games:             Game[];   // 最終乾淨陣列：已篩選 + 去重 + 排序
+  rawCount:          number;   // 載入後、篩選前的總筆數
+  filteredCount:     number;   // 日期篩選後（去重前）的筆數
+  duplicatesRemoved: number;   // 被 deduplicateByGameId 移除的筆數
 }
 
 export interface UiState {
