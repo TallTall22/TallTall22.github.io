@@ -10,7 +10,7 @@ export const useTripStore = defineStore('trip', () => {
   const selectedTrip = ref<Trip | null>(null);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
-  const tripGenerationRequestId = ref<number>(0);
+  const _tripGenId = ref<number>(0);
 
   const hasDateRange = computed(() => startDate.value !== null && endDate.value !== null);
   const hasHomeStadium = computed(() => homeStadiumId.value !== null);
@@ -37,15 +37,22 @@ export const useTripStore = defineStore('trip', () => {
 
   /**
    * F-03.4 stub: called after a preset is applied or manually by F-04 orchestrator.
-   * F-04 will watch `tripGenerationRequestId` to trigger the routing algorithm.
+   * F-04 will watch `tripGenerationRequestId` (readonly computed) to trigger the routing algorithm.
    * Each call increments the counter so repeated calls always trigger the watcher.
-   * Do NOT remove the console.info — it is the integration hook marker.
    */
   function requestTripGeneration(): void {
-    tripGenerationRequestId.value += 1;
-    // eslint-disable-next-line no-console
-    console.info('[F-03 → F-04 hook] requestTripGeneration called, id:', tripGenerationRequestId.value);
+    _tripGenId.value += 1;
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.info('[F-03 → F-04 hook] requestTripGeneration called, id:', _tripGenId.value);
+    }
   }
+
+  function setSelectedTrip(trip: Trip | null): void {
+    selectedTrip.value = trip;
+  }
+
+  const tripGenerationRequestId = computed(() => _tripGenId.value);
 
   return {
     startDate,
@@ -60,6 +67,7 @@ export const useTripStore = defineStore('trip', () => {
     homeStadiumId,
     hasHomeStadium,
     setHomeStadium,
+    setSelectedTrip,
     tripGenerationRequestId,
     requestTripGeneration,
   };

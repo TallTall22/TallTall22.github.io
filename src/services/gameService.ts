@@ -18,7 +18,7 @@ export function _setGameJsonLoader(loader: GameJsonLoader): void {
 
 /**
  * Runtime shape guard for Game[].
- * Validates the first element's critical fields only (performance trade-off).
+ * Validates every element's critical fields.
  *
  * IMPORTANT: homeTeamId uses numeric MLB teamId format (e.g., "147" for NYY),
  * matching Stadium.teamId — NOT Stadium.id ("NYY").
@@ -26,15 +26,17 @@ export function _setGameJsonLoader(loader: GameJsonLoader): void {
  */
 function isGameArray(data: unknown): data is Game[] {
   if (!Array.isArray(data) || data.length === 0) return false;
-  const first = data[0] as Record<string, unknown>;
-  return (
-    typeof first['gameId']       === 'string' &&
-    typeof first['date']         === 'string' &&
-    typeof first['homeTeamId']   === 'string' &&
-    typeof first['awayTeamId']   === 'string' &&
-    typeof first['startTimeUtc'] === 'string' &&
-    typeof first['venue']        === 'string'
-  );
+  return data.every((item) => {
+    const g = item as Record<string, unknown>;
+    return (
+      typeof g['gameId']       === 'string' &&
+      typeof g['date']         === 'string' &&
+      typeof g['homeTeamId']   === 'string' &&
+      typeof g['awayTeamId']   === 'string' &&
+      typeof g['startTimeUtc'] === 'string' &&
+      typeof g['venue']        === 'string'
+    );
+  });
 }
 
 /** Clears the module-level cache. Exposed for unit testing only. */

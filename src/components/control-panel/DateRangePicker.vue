@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, onBeforeUnmount, ref } from 'vue';
+import { computed, watch, ref } from 'vue';
 import DateRangePickerStart from './DateRangePickerStart.vue';
 import DateRangePickerEnd from './DateRangePickerEnd.vue';
 import DateRangeValidationFeedback from './DateRangeValidationFeedback.vue';
@@ -28,7 +28,8 @@ const endDateHasError = computed(() =>
    validation.value.error === 'EXCEEDS_MAX_DAYS')
 );
 
-const stopWatcher = watch(validation, (val) => {
+// Vue 3 auto-stops watch() registered in setup() on unmount.
+watch(validation, (val) => {
   if (val.valid && startDate.value && endDate.value) {
     hasUserInput.value = true;
     emit('range-confirmed', {
@@ -47,8 +48,6 @@ function handleEndDateChange(date: ISODateString | null): void {
   hasUserInput.value = true;
   onEndDateChange(date);
 }
-
-onBeforeUnmount(() => stopWatcher());
 </script>
 
 <template>

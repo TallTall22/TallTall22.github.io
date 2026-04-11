@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import type { Game } from '@/types/models';
 import {
   filterByDateRange,
-  filterHomeOnly,
+  filterValidHomeGames,
   deduplicateByGameId,
   sortByDate,
   applyGameFilters,
@@ -77,21 +77,21 @@ describe('filterByDateRange', () => {
   });
 });
 
-// ── filterHomeOnly ────────────────────────────────────────────────────────────
+// ── filterValidHomeGames ──────────────────────────────────────────────────────
 
-describe('filterHomeOnly', () => {
+describe('filterValidHomeGames', () => {
   it('retains games with non-empty homeTeamId', () => {
     const games = [makeGame({ homeTeamId: '147' })];
-    expect(filterHomeOnly(games)).toHaveLength(1);
+    expect(filterValidHomeGames(games)).toHaveLength(1);
   });
 
   it('removes games with empty string homeTeamId (data anomaly guard)', () => {
     const games = [makeGame({ homeTeamId: '' })];
-    expect(filterHomeOnly(games)).toHaveLength(0);
+    expect(filterValidHomeGames(games)).toHaveLength(0);
   });
 
   it('returns empty array for empty input', () => {
-    expect(filterHomeOnly([])).toEqual([]);
+    expect(filterValidHomeGames([])).toEqual([]);
   });
 
   it('keeps multiple valid games', () => {
@@ -99,7 +99,7 @@ describe('filterHomeOnly', () => {
       makeGame({ gameId: 'g1', homeTeamId: '147' }),
       makeGame({ gameId: 'g2', homeTeamId: '111' }),
     ];
-    expect(filterHomeOnly(games)).toHaveLength(2);
+    expect(filterValidHomeGames(games)).toHaveLength(2);
   });
 });
 

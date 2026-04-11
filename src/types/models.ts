@@ -143,3 +143,36 @@ export interface UiState {
   isSidebarOpen:   boolean;
   viewMode:        'map' | 'timeline' | 'split';
 }
+
+// ── F-05: Routing Algorithm Types ────────────────────────────────────────────
+
+export interface RoutingOptions {
+  startDate:     ISODateString;
+  endDate:       ISODateString;
+  /** Stadium.id (e.g. "NYY") — matches tripStore.homeStadiumId */
+  homeStadiumId: string;
+}
+
+/**
+ * A game candidate scored during the greedy pass.
+ * score > 0 means reachable; higher = closer = better.
+ */
+export interface ScoredCandidate {
+  game:       Game;
+  stadium:    Stadium;
+  distanceKm: number;
+  score:      number;
+}
+
+export type RoutingAlgorithmErrorCode =
+  | 'NO_HOME_STADIUM'     // homeStadiumId not found in stadiums list
+  | 'NO_GAMES'            // filteredGames is empty
+  | 'STADIUM_LOAD_FAILED' // loadStadiums() returned an error
+  | 'EMPTY_ITINERARY';    // algorithm produced 0 days (shouldn't happen with valid input)
+
+export interface RoutingResult {
+  trip:               Trip | null;
+  error:              RoutingAlgorithmErrorCode | null;
+  totalGamesAttended: number;
+  totalTravelDays:    number;
+}

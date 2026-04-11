@@ -23,6 +23,10 @@ function handleLogoError(event: Event): void {
   const img = event.target as HTMLImageElement;
   img.style.display = 'none';
 }
+
+function asOption(raw: unknown): StadiumSelectorOption {
+  return raw as StadiumSelectorOption;
+}
 </script>
 
 <template>
@@ -66,8 +70,8 @@ function handleLogoError(event: Event): void {
           <template #prepend>
             <div class="logo-wrapper mr-3">
               <img
-                :src="(item.raw as StadiumSelectorOption).stadium.logoUrl"
-                :alt="(item.raw as StadiumSelectorOption).stadium.teamNickname + ' logo'"
+                :src="asOption(item.raw).stadium.logoUrl"
+                :alt="asOption(item.raw).stadium.teamNickname + ' logo'"
                 width="32"
                 height="32"
                 @error="handleLogoError"
@@ -75,9 +79,9 @@ function handleLogoError(event: Event): void {
               <span class="logo-fallback">⚾</span>
             </div>
           </template>
-          <v-list-item-title>{{ (item.raw as StadiumSelectorOption).stadium.teamName }}</v-list-item-title>
+          <v-list-item-title>{{ asOption(item.raw).stadium.teamName }}</v-list-item-title>
           <v-list-item-subtitle>
-            {{ (item.raw as StadiumSelectorOption).stadium.stadiumName }} · {{ (item.raw as StadiumSelectorOption).stadium.city }}, {{ (item.raw as StadiumSelectorOption).stadium.state }}
+            {{ asOption(item.raw).stadium.stadiumName }} · {{ asOption(item.raw).stadium.city }}, {{ asOption(item.raw).stadium.state }}
           </v-list-item-subtitle>
         </v-list-item>
       </template>
@@ -86,13 +90,13 @@ function handleLogoError(event: Event): void {
       <template #selection="{ item }">
         <div class="d-flex align-center ga-2">
           <img
-            :src="(item.raw as StadiumSelectorOption).stadium.logoUrl"
-            :alt="(item.raw as StadiumSelectorOption).stadium.teamNickname"
+            :src="asOption(item.raw).stadium.logoUrl"
+            :alt="asOption(item.raw).stadium.teamNickname"
             width="24"
             height="24"
             @error="handleLogoError"
           />
-          <span>{{ (item.raw as StadiumSelectorOption).stadium.teamName }}</span>
+          <span>{{ asOption(item.raw).stadium.teamName }}</span>
         </div>
       </template>
     </v-autocomplete>
