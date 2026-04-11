@@ -224,6 +224,58 @@ describe('useRoutingAlgorithm (integration)', () => {
 
       expect(wrapper.vm.isRouting).toBe(false);
     });
+
+    it('discards stale result when a newer request fires before the first completes', async () => {
+      // Set up two mock results: stale (slow) and fresh (fast)
+      let resolveStale!: (v: RoutingResult) => void;
+      const stalePromise = new Promise<RoutingResult>((r) => { resolveStale = r; });
+
+      const freshResult: RoutingResult = {
+        error:              null,
+        totalGamesAttended: 1,
+        totalTravelDays:    0,
+        trip: {
+          tripId:        'fresh-trip',
+          createdAt:     '2026-06-15',
+          startDate:     '2026-06-15',
+          endDate:       '2026-06-15',
+          homeStadiumId: 'NYY',
+          itinerary:     [],
+          totalDistance: 0,
+          qualityScore:  100,
+        },
+      };
+
+      mockComputeTrip
+        .mockReturnValueOnce(stalePromise)      // request 1: slow, won't resolve yet
+        .mockResolvedValueOnce(freshResult);    // request 2: resolves immediately
+
+      const { wrapper, gamesRef } = mountWithComposable();
+      const store = useTripStore();
+
+      store.setStartDate('2026-06-15');
+      store.setEndDate('2026-06-15');
+      store.setHomeStadium('NYY');
+
+      // Trigger request 1 by setting games
+      gamesRef.value = [makeGame()];
+      await nextTick(); // let watcher fire, request 1 starts
+
+      // Trigger request 2 by changing games (watcher fires again with higher requestCounter)
+      gamesRef.value = [makeGame({ gameId: 'g-002' })];
+      await flushPromises(); // request 2 resolves; request 1 is still pending
+
+      // Stale request 1 resolves AFTER request 2 is done
+      resolveStale(STUB_TRIP_RESULT); // STUB_TRIP_RESULT has tripId: 'test-trip-id'
+      await flushPromises();
+
+      // Only the FRESH result (from request 2) should survive — stale request 1 is discarded
+      expect(store.selectedTrip?.tripId).toBe('fresh-trip');
+      expect(wrapper.vm.generatedTrip?.tripId).toBe('fresh-trip');
+      expect(wrapper.vm.routingError).toBeNull();
+      expect(wrapper.vm.isRouting).toBe(false);
+      expect(mockComputeTrip).toHaveBeenCalledTimes(2);
+    });
   });
 });
 

@@ -264,7 +264,10 @@ describe('buildItinerary()', () => {
       makeGame({ gameId: 'far',  date: '2026-06-01', homeTeamId: '119' }), // LAD = far
     ];
     const r = buildItinerary(games, NYY, buildStadiumByTeamIdMap([NYY, LAD]), '2026-06-01', '2026-06-01');
-    if (r[0]!.type === 'game_day') expect(r[0]!.stadiumId).toBe('NYY');
+    expect(r[0]!.type).toBe('game_day');       // hard assertion — fails if wrong type
+    if (r[0]!.type === 'game_day') {           // TypeScript narrowing
+      expect(r[0]!.stadiumId).toBe('NYY');
+    }
   });
 
   it('treats days with only unknown-teamId games as TravelDay', () => {
@@ -276,13 +279,19 @@ describe('buildItinerary()', () => {
   it('distanceFromPrevious=0 for same-stadium GameDay', () => {
     const g = makeGame({ date: '2026-06-01', homeTeamId: '147' });
     const r = buildItinerary([g], NYY, map3, '2026-06-01', '2026-06-01');
-    if (r[0]!.type === 'game_day') expect(r[0]!.distanceFromPrevious).toBe(0);
+    expect(r[0]!.type).toBe('game_day');
+    if (r[0]!.type === 'game_day') {
+      expect(r[0]!.distanceFromPrevious).toBe(0);
+    }
   });
 
   it('positive distanceFromPrevious when changing stadiums', () => {
     const g = makeGame({ date: '2026-06-01', homeTeamId: '111' }); // BOS
     const r = buildItinerary([g], NYY, buildStadiumByTeamIdMap([NYY, BOS]), '2026-06-01', '2026-06-01');
-    if (r[0]!.type === 'game_day') expect(r[0]!.distanceFromPrevious).toBeGreaterThan(0);
+    expect(r[0]!.type).toBe('game_day');
+    if (r[0]!.type === 'game_day') {
+      expect(r[0]!.distanceFromPrevious).toBeGreaterThan(0);
+    }
   });
 });
 
