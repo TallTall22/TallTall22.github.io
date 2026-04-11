@@ -1,16 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { ISODateString } from '@/types';
+import type { DateRangePickerEndProps } from '@/types/components';
 
-const props = defineProps<{
-  modelValue: ISODateString | null;
-  minDate:    ISODateString | null;
-  maxDate:    ISODateString | null;
-  disabled?:  boolean;
-  label?:     string;
-  hasError?:  boolean;
-  errorMsg?:  string | null;
-}>();
+const props = defineProps<DateRangePickerEndProps>();
 
 const emit = defineEmits<{
   (e: 'update:modelValue', date: ISODateString | null): void;

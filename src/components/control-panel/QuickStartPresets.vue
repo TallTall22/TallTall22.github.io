@@ -2,7 +2,6 @@
 import type { QuickStartPresetsProps, QuickStartPresetsEmits } from '@/types/components';
 import type { QuickStartPreset } from '@/types/presets';
 import { useQuickStartPresets } from '@/composables/useQuickStartPresets';
-import { useTripStore } from '@/stores/tripStore';
 import PresetButtonGroup from './PresetButtonGroup.vue';
 
 withDefaults(defineProps<QuickStartPresetsProps>(), {
@@ -11,8 +10,6 @@ withDefaults(defineProps<QuickStartPresetsProps>(), {
 
 const emit = defineEmits<QuickStartPresetsEmits>();
 
-const tripStore = useTripStore();
-
 const {
   presets,
   activePresetId,
@@ -20,6 +17,7 @@ const {
   showSnackbar,
   applyPreset,
   dismissSnackbar,
+  isTripGenerating,
 } = useQuickStartPresets();
 
 function handlePresetSelected(preset: QuickStartPreset): void {
@@ -42,7 +40,7 @@ function handlePresetSelected(preset: QuickStartPreset): void {
       <PresetButtonGroup
         :presets="presets"
         :active-preset-id="activePresetId"
-        :disabled="disabled || tripStore.isLoading"
+        :disabled="disabled || isTripGenerating"
         @preset-selected="handlePresetSelected"
       />
     </v-card-text>

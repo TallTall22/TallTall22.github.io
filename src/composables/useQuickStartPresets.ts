@@ -29,11 +29,13 @@ export interface UseQuickStartPresetsReturn {
   applyPreset:     (preset: QuickStartPreset) => PresetAppliedEvent;
   /** Programmatically dismiss the snackbar */
   dismissSnackbar: () => void;
+  /** Mirrors tripStore.isLoading — true while the F-04/F-05 pipeline is running */
+  isTripGenerating: Ref<boolean>;
 }
 
 export function useQuickStartPresets(): UseQuickStartPresetsReturn {
   const store = useTripStore();
-  const { startDate, endDate, homeStadiumId } = storeToRefs(store);
+  const { startDate, endDate, homeStadiumId, isLoading } = storeToRefs(store);
 
   const activePresetId      = ref<PresetRegion | null>(null);
   const confirmationMessage = ref<string | null>(null);
@@ -113,5 +115,6 @@ export function useQuickStartPresets(): UseQuickStartPresetsReturn {
     showSnackbar,
     applyPreset,
     dismissSnackbar,
+    isTripGenerating:    isLoading,
   };
 }

@@ -31,6 +31,8 @@ export interface DateRangePickerEndProps {
   maxDate:    ISODateString | null;
   disabled?:  boolean;
   label?:     string;
+  hasError?:  boolean;
+  errorMsg?:  string | null;
 }
 export interface DateRangePickerEndEmits {
   (e: 'update:modelValue', date: ISODateString | null): void;
@@ -38,7 +40,8 @@ export interface DateRangePickerEndEmits {
 
 // ── DateRangeValidationFeedback ───────────────────────────────
 export interface DateRangeValidationFeedbackProps {
-  result: ValidationResult;
+  result:        ValidationResult;
+  hasUserInput?: boolean;
 }
 
 // ── DateRangePicker (container) ───────────────────────────────
