@@ -12,6 +12,11 @@ import { loadStadiums } from '@/services/stadiumService';
 // even if useQuickStartPresets is called from multiple component instances.
 let devValidationDone = false;
 
+/** Resets the DEV validation flag. Exposed for test isolation only. */
+export function _resetDevValidation(): void {
+  devValidationDone = false;
+}
+
 export interface UseQuickStartPresetsReturn {
   /** Static list of all presets */
   readonly presets: readonly QuickStartPreset[];
