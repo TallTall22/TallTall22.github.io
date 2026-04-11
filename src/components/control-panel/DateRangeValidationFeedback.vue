@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import type { ValidationResult } from '@/types';
+import type { DateRangeValidationFeedbackProps } from '@/types/components';
 
-interface Props {
-  result: ValidationResult;
-  hasUserInput?: boolean;
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<DateRangeValidationFeedbackProps>(), {
   hasUserInput: false,
 });
 </script>
