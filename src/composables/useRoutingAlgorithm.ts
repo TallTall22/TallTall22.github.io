@@ -2,17 +2,18 @@
 //
 // F-05: Reactive composable that runs the greedy routing algorithm whenever
 // filteredGames changes (after useGameFilter completes) and writes the result
-// to tripStore.selectedTrip.
+// to tripStore.selectedTrip via store.setSelectedTrip().
 //
+// Accepts filteredGames as an explicit parameter to prevent double-instance
+// of useGameFilter when App.vue wires both composables (P1-7).
 // Race condition protection: requestCounter version stamp (same pattern as useGameFilter).
 
 import { ref, watch, onBeforeUnmount } from 'vue';
 import type { Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTripStore } from '@/stores/tripStore';
-import { useGameFilter } from '@/composables/useGameFilter';
 import { computeTrip } from '@/services/routingService';
-import type { Trip, RoutingAlgorithmErrorCode } from '@/types/models';
+import type { Game, Trip, RoutingAlgorithmErrorCode } from '@/types/models';
 
 export interface UseRoutingAlgorithmReturn {
   /** The last successfully computed trip; null if not yet computed or on error. */
@@ -23,20 +24,17 @@ export interface UseRoutingAlgorithmReturn {
   routingError:  Ref<RoutingAlgorithmErrorCode | null>;
 }
 
-export function useRoutingAlgorithm(): UseRoutingAlgorithmReturn {
+export function useRoutingAlgorithm(filteredGames: Ref<Game[]>): UseRoutingAlgorithmReturn {
   const store = useTripStore();
   const { homeStadiumId, startDate, endDate } = storeToRefs(store);
-
-  // F-04 → F-05 pipeline: consume filteredGames from the game filter composable.
-  // Both composables watch tripGenerationRequestId; F-04 runs first (data load),
-  // then filteredGames becomes reactive, triggering our watcher here.
-  const { filteredGames } = useGameFilter();
 
   const generatedTrip = ref<Trip | null>(null);
   const isRouting     = ref<boolean>(false);
   const routingError  = ref<RoutingAlgorithmErrorCode | null>(null);
 
-  // Version stamp for race-condition protection
+  // Version stamp for race-condition protection.
+  // Uses a private counter (NOT tripGenerationRequestId) because our trigger
+  // is filteredGames changes, not store increments.
   let requestCounter = 0;
 
   let isMounted = true;
@@ -66,16 +64,16 @@ export function useRoutingAlgorithm(): UseRoutingAlgorithmReturn {
     if (result.error !== null) {
       routingError.value  = result.error;
       generatedTrip.value = null;
-      store.selectedTrip  = null;
+      store.setSelectedTrip(null);
     } else {
       generatedTrip.value = result.trip;
-      store.selectedTrip  = result.trip;
+      store.setSelectedTrip(result.trip);
     }
     isRouting.value = false;
   }
 
-  // Watch filteredGames — fires after useGameFilter writes its result
-  const stopWatcher = watch(
+  // Watch filteredGames — fires after useGameFilter writes its result.
+  watch(
     filteredGames,
     () => {
       requestCounter++;
@@ -83,8 +81,6 @@ export function useRoutingAlgorithm(): UseRoutingAlgorithmReturn {
     },
     { deep: false, immediate: false },
   );
-
-  onBeforeUnmount(() => { stopWatcher(); });
 
   return { generatedTrip, isRouting, routingError };
 }
