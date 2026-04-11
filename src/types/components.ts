@@ -1,5 +1,6 @@
 // src/types/components.ts
 import type { ValidationResult, ISODateString, Stadium } from './models';
+import type { QuickStartPreset, PresetAppliedEvent, PresetRegion } from './presets';
 
 // ── StadiumSelector ───────────────────────────────────────────
 export interface StadiumSelectorOption {
@@ -46,5 +47,34 @@ export interface DateRangePickerProps {
 }
 export interface DateRangePickerEmits {
   (e: 'range-confirmed', range: { startDate: ISODateString; endDate: ISODateString }): void;
-  (e: 'range-cleared'): void;
+}
+
+// ── F-03: Quick Start Presets ─────────────────────────────────
+
+// ── PresetBadge (Atom) ────────────────────────────────────────
+export interface PresetBadgeProps {
+  preset:    QuickStartPreset;
+  isActive?: boolean;
+  disabled?: boolean;
+}
+export interface PresetBadgeEmits {
+  (e: 'select', preset: QuickStartPreset): void;
+}
+
+// ── PresetButtonGroup (Molecule) ──────────────────────────────
+export interface PresetButtonGroupProps {
+  presets:         readonly QuickStartPreset[];
+  activePresetId?: PresetRegion | null;
+  disabled?:       boolean;
+}
+export interface PresetButtonGroupEmits {
+  (e: 'preset-selected', preset: QuickStartPreset): void;
+}
+
+// ── QuickStartPresets (Organism) ──────────────────────────────
+export interface QuickStartPresetsProps {
+  disabled?: boolean;
+}
+export interface QuickStartPresetsEmits {
+  (e: 'preset-applied', event: PresetAppliedEvent): void;
 }
