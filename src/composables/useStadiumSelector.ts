@@ -48,10 +48,11 @@ export function useStadiumSelector(): UseStadiumSelectorReturn {
     store.setHomeStadium(null);
   }
 
+  let isMounted = true;
+  onBeforeUnmount(() => { isMounted = false; });
+
   onMounted(async () => {
     isLoading.value = true;
-    let isMounted = true;
-    onBeforeUnmount(() => { isMounted = false; });
 
     const result = await loadStadiums();
 
