@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 import StadiumSelector from './components/control-panel/StadiumSelector.vue';
+import QuickStartPresets from './components/control-panel/QuickStartPresets.vue';
+import type { PresetAppliedEvent } from './types/presets';
+
+function onPresetApplied(event: PresetAppliedEvent): void {
+  // F-04 integration hook: replace this with routing algorithm trigger
+  // eslint-disable-next-line no-console
+  console.info('[F-03] preset-applied', event);
+}
+
+function onRangeConfirmed(_range: { startDate: string; endDate: string }): void {
+  // F-04 integration hook: trigger game filtering when date range is confirmed
+}
 </script>
 
 <template>
@@ -13,6 +25,12 @@ import StadiumSelector from './components/control-panel/StadiumSelector.vue';
       <v-container>
         <v-row justify="center">
           <v-col cols="12" md="8" lg="6">
+            <!-- F-03: Quick Start Presets -->
+            <QuickStartPresets
+              class="mb-4"
+              @preset-applied="onPresetApplied"
+            />
+
             <!-- F-02: Home Stadium Selection -->
             <StadiumSelector
               class="mb-4"
@@ -20,8 +38,7 @@ import StadiumSelector from './components/control-panel/StadiumSelector.vue';
 
             <!-- F-01: Date Range -->
             <DateRangePicker
-              @range-confirmed="(r) => console.log('confirmed', r)"
-              @range-cleared="() => console.log('cleared')"
+              @range-confirmed="onRangeConfirmed"
             />
           </v-col>
         </v-row>

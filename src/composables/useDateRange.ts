@@ -12,7 +12,11 @@ export function toDate(iso: ISODateString): Date {
 }
 
 export function todayISO(): ISODateString {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 export function addDays(iso: ISODateString, days: number): ISODateString {
@@ -90,10 +94,6 @@ export function useDateRange() {
     }
   }
 
-  function clearDates(): void {
-    store.clearDates();
-  }
-
   return {
     startDate,
     endDate,
@@ -102,6 +102,5 @@ export function useDateRange() {
     validation,
     onStartDateChange,
     onEndDateChange,
-    clearDates,
   };
 }

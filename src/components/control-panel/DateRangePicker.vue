@@ -8,7 +8,6 @@ import type { ISODateString } from '@/types';
 
 const emit = defineEmits<{
   (e: 'range-confirmed', range: { startDate: ISODateString; endDate: ISODateString }): void;
-  (e: 'range-cleared'): void;
 }>();
 
 const hasUserInput = ref(false);
@@ -21,7 +20,6 @@ const {
   validation,
   onStartDateChange,
   onEndDateChange,
-  clearDates,
 } = useDateRange();
 
 const endDateHasError = computed(() =>
@@ -48,12 +46,6 @@ function handleStartDateChange(date: ISODateString | null): void {
 function handleEndDateChange(date: ISODateString | null): void {
   hasUserInput.value = true;
   onEndDateChange(date);
-}
-
-function handleClear(): void {
-  clearDates();
-  hasUserInput.value = false;
-  emit('range-cleared');
 }
 
 onBeforeUnmount(() => stopWatcher());
@@ -92,17 +84,5 @@ onBeforeUnmount(() => stopWatcher());
     </v-row>
 
     <DateRangeValidationFeedback :result="validation" :has-user-input="hasUserInput" />
-
-    <v-btn
-      v-if="startDate || endDate"
-      variant="text"
-      size="small"
-      class="mt-2"
-      color="secondary"
-      prepend-icon="mdi-close-circle"
-      @click="handleClear"
-    >
-      清除日期
-    </v-btn>
   </v-card>
 </template>

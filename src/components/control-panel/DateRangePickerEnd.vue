@@ -23,7 +23,10 @@ const isDisabled = computed(() => props.disabled === true || props.minDate === n
 function normalizeDate(val: Date | string | null | undefined): ISODateString | null {
   if (val === null || val === undefined) return null;
   if (typeof val === 'string') return val.slice(0, 10);
-  return val.toISOString().slice(0, 10);
+  const y = val.getFullYear();
+  const m = String(val.getMonth() + 1).padStart(2, '0');
+  const d = String(val.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function onDateSelected(val: Date | string | null | undefined): void {
