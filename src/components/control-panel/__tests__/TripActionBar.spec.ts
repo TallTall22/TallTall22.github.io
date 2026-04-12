@@ -222,6 +222,18 @@ describe('TripActionBar', () => {
     expect(tripStore.selectedTrip).toBeNull();
   });
 
+  it('clicking Reset clears the ?trip= URL parameter', async () => {
+    const tripStore = useTripStore();
+    tripStore.setSelectedTrip(MOCK_TRIP);
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+
+    const wrapper = mountComponent();
+    await findBtn(wrapper, '重新開始')!.trigger('click');
+
+    // Should clear URL back to pathname with no search params
+    expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/');
+  });
+
   it('clicking Reset resets all three stores in one click', async () => {
     const tripStore      = useTripStore();
     const mapStore       = useMapStore();

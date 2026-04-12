@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
 import { useTripStore } from '@/stores/tripStore';
-import type { ExportErrorCode } from '@/types';
+import type { TripActionErrorCode } from '@/types';
 
 /** Internal payload — only input parameters, not the full Trip object */
 interface TripSharePayload {
@@ -14,7 +14,7 @@ interface TripSharePayload {
 export interface UseTripShareReturn {
   shareTrip(): Promise<void>;
   restoreFromUrl(): void;
-  shareError: Ref<ExportErrorCode | null>;
+  shareError: Ref<TripActionErrorCode | null>;
   isSharing: Ref<boolean>;
 }
 
@@ -24,6 +24,8 @@ function encodePayload(payload: TripSharePayload): string {
     .replace(/\//g, '_')
     .replace(/=/g, '');
 }
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function decodePayload(encoded: string): TripSharePayload | null {
   try {
@@ -38,8 +40,8 @@ function decodePayload(encoded: string): TripSharePayload | null {
       typeof (parsed as Record<string, unknown>).s === 'string' &&
       typeof (parsed as Record<string, unknown>).e === 'string' &&
       typeof (parsed as Record<string, unknown>).h === 'string' &&
-      (parsed as Record<string, unknown>).s !== '' &&
-      (parsed as Record<string, unknown>).e !== '' &&
+      ISO_DATE_RE.test((parsed as Record<string, unknown>).s as string) &&
+      ISO_DATE_RE.test((parsed as Record<string, unknown>).e as string) &&
       (parsed as Record<string, unknown>).h !== ''
     ) {
       return parsed as TripSharePayload;
@@ -52,7 +54,7 @@ function decodePayload(encoded: string): TripSharePayload | null {
 
 export function useTripShare(): UseTripShareReturn {
   const tripStore = useTripStore();
-  const shareError = ref<ExportErrorCode | null>(null);
+  const shareError = ref<TripActionErrorCode | null>(null);
   const isSharing = ref<boolean>(false);
 
   async function shareTrip(): Promise<void> {
@@ -90,7 +92,8 @@ export function useTripShare(): UseTripShareReturn {
           textArea.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
           document.body.appendChild(textArea);
           textArea.select();
-          document.execCommand('copy');
+          const ok = document.execCommand('copy');
+          if (!ok) shareError.value = 'CLIPBOARD_FAIL';
           document.body.removeChild(textArea);
         } catch {
           shareError.value = 'CLIPBOARD_FAIL';

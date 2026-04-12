@@ -300,6 +300,16 @@ describe('useTripShare', () => {
     expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/');
   });
 
+  it('restoreFromUrl removes URL param when date is not ISO format', () => {
+    const badDate = buildEncodedParam('April 12 2026', '2026-04-20', 'NYY');
+    setWindowSearch(`?trip=${badDate}`);
+
+    const { restoreFromUrl } = useTripShare();
+    restoreFromUrl();
+
+    expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/');
+  });
+
   it('restoreFromUrl removes URL param when payload is not an object', () => {
     const badType = btoa(JSON.stringify(42))
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');

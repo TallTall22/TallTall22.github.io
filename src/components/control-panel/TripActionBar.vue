@@ -37,6 +37,8 @@ function handleReset(): void {
   tripStore.reset();
   mapStore.reset();
   highlightStore.clearHovered();
+  // Clear any shared URL param so a page refresh doesn't restore the deleted trip
+  window.history.replaceState({}, '', window.location.pathname);
   showSnackbar('行程已重置');
 }
 

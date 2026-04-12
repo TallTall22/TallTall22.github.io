@@ -16,7 +16,7 @@
 import { ref } from 'vue';
 import type { Ref } from 'vue';
 import { useTripStore } from '@/stores/tripStore';
-import type { ExportErrorCode } from '@/types';
+import type { TripActionErrorCode } from '@/types';
 
 // ── Public interface (return contract) ───────────────────────────────────────
 
@@ -28,7 +28,7 @@ export interface UseExportTripReturn {
   /** True while the blob/download operation is in progress. */
   isExporting: Ref<boolean>;
   /** Set to a typed error code on failure; null when clean. */
-  exportError: Ref<ExportErrorCode | null>;
+  exportError: Ref<TripActionErrorCode | null>;
 }
 
 // ── Implementation ───────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ export function useExportTrip(): UseExportTripReturn {
   const tripStore = useTripStore();
 
   const isExporting = ref<boolean>(false);
-  const exportError = ref<ExportErrorCode | null>(null);
+  const exportError = ref<TripActionErrorCode | null>(null);
 
   // ── exportJson ─────────────────────────────────────────────────────────────
 
