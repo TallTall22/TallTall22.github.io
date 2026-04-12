@@ -86,4 +86,17 @@ describe('PresetBadge', () => {
     const wrapper = mountBadge({ isActive: false });
     expect(wrapper.find('button').attributes('aria-pressed')).toBe('false');
   });
+
+  it('emits "select" when Enter key is pressed', async () => {
+    const wrapper = mountBadge();
+    await wrapper.find('button').trigger('keydown', { key: 'Enter' });
+    const emitted = wrapper.emitted<[QuickStartPreset]>('select');
+    expect(emitted).toBeTruthy();
+  });
+
+  it('does not emit "select" on keydown when disabled', async () => {
+    const wrapper = mountBadge({ disabled: true });
+    await wrapper.find('button').trigger('keydown', { key: 'Enter' });
+    expect(wrapper.emitted('select')).toBeUndefined();
+  });
 });
