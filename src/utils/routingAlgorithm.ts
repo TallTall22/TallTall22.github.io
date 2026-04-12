@@ -111,7 +111,7 @@ export function scoreGameCandidates(
       game,
       stadium,
       distanceKm,
-      score: MAX_REACH_KM - distanceKm,
+      score: Math.max(0, MAX_REACH_KM - distanceKm),
     });
   }
   return candidates;
