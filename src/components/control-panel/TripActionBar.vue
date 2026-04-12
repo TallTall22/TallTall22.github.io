@@ -5,7 +5,7 @@ import { useMapStore } from '@/stores/mapStore';
 import { useHighlightStore } from '@/stores/highlightStore';
 import { useExportTrip } from '@/composables/useExportTrip';
 import { useTripShare } from '@/composables/useTripShare';
-import type { TripActionBarProps } from '@/types';
+import type { TripActionBarProps } from '@/types/components';
 
 const props = withDefaults(defineProps<TripActionBarProps>(), {
   isBusy: false,
