@@ -24,6 +24,12 @@ export interface ValidationResult {
 
 export const MAX_TRIP_DAYS = 180 as const;
 
+export interface GameSeries {
+  seriesId:   string;
+  gameNumber: number;
+  maxGames:   number;
+}
+
 export interface Game {
   gameId:         string;
   date:           ISODateString;
@@ -33,11 +39,7 @@ export interface Game {
   startTimeLocal: string;
   startTimeUtc:   string;
   venue:          string;
-  series?: {
-    seriesId:    string;
-    gameNumber:  number;
-    maxGames:    number;
-  };
+  series?: GameSeries;
 }
 
 interface TripDayBase {
@@ -128,20 +130,6 @@ export interface FilteredGamesResult {
   rawCount:          number;   // 載入後、篩選前的總筆數
   filteredCount:     number;   // 日期篩選後（去重前）的筆數
   duplicatesRemoved: number;   // 被 deduplicateByGameId 移除的筆數
-}
-
-export interface UiState {
-  isLoading:      boolean;
-  error?:         string;
-  selectedTrip:   Trip | null;
-  mapCenter: {
-    lat: number;
-    lng: number;
-  };
-  mapZoom:         number;
-  highlightedDay?: number;
-  isSidebarOpen:   boolean;
-  viewMode:        'map' | 'timeline' | 'split';
 }
 
 // ── F-05: Routing Algorithm Types ────────────────────────────────────────────

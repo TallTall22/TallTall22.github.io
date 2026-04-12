@@ -1,6 +1,7 @@
 // src/types/components.ts
 import type { ValidationResult, ISODateString, Stadium } from './models';
 import type { QuickStartPreset, PresetAppliedEvent, PresetRegion } from './presets';
+import type { MapPolylineSegment } from './map';
 
 // ── StadiumSelector ───────────────────────────────────────────
 export interface StadiumSelectorOption {
@@ -80,4 +81,16 @@ export interface QuickStartPresetsProps {
 }
 export interface QuickStartPresetsEmits {
   (e: 'preset-applied', event: PresetAppliedEvent): void;
+}
+
+// ── F-06: Map View ────────────────────────────────────────────
+
+export interface MapViewProps {
+  isLoading?: boolean;
+  hasError?:  boolean;
+  errorMsg?:  string | null;
+}
+
+export interface MapPolylineLayerProps {
+  segments: MapPolylineSegment[];
 }
