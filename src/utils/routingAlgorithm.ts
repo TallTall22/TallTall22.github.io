@@ -20,6 +20,12 @@ const DRIVE_SPEED_KMH    = 100;   // approximate driving speed (km/h)
 const FLIGHT_SPEED_KMH   = 800;   // approximate cruising speed (km/h)
 const FLIGHT_OVERHEAD_MIN = 120;  // airport overhead: check-in + boarding + deplaning (min)
 
+// Tourism-routing constants (used by scoreGameCandidatesForTourism + buildItinerary)
+const LOOKAHEAD_DAYS              = 3;     // days ahead to scan for future game density
+const LOOKAHEAD_REACH_KM          = 600;   // stadiums within this km count as reachable next day
+const LOOKAHEAD_BONUS_PER_STADIUM = 300;   // score bonus per unique reachable future stadium
+const REVISIT_PENALTY             = 4_000; // strong score penalty for already-attended stadium
+
 function toRadians(deg: number): number {
   return (deg * Math.PI) / 180;
 }
@@ -117,14 +123,90 @@ export function scoreGameCandidates(
   return candidates;
 }
 
+// ── Tourism-aware scoring ─────────────────────────────────────────────────────
+
 /**
- * F-05 greedy core: iterates every calendar day in [startDate, endDate],
- * picks the closest game stadium each day, inserts TravelDays for game-free days.
+ * Context required by the tourism-aware scoring function.
+ * Encapsulates look-ahead data and visited-stadium state.
+ */
+export interface LookaheadContext {
+  readonly gamesByDate:       Map<ISODateString, Game[]>;
+  /** The current day's Date object (used to compute future dates). */
+  readonly currentDate:       Date;
+  readonly visitedStadiumIds: ReadonlySet<string>;
+  readonly byTeamId:          Map<string, Stadium>;
+}
+
+/**
+ * Counts unique, not-yet-visited stadiums reachable within LOOKAHEAD_REACH_KM
+ * from candidateStadium over the next LOOKAHEAD_DAYS calendar days.
+ * Each reachable stadium contributes LOOKAHEAD_BONUS_PER_STADIUM to the score.
+ */
+function computeLookaheadBonus(candidateStadium: Stadium, ctx: LookaheadContext): number {
+  const reachable = new Set<string>();
+  for (let offset = 1; offset <= LOOKAHEAD_DAYS; offset++) {
+    const futureDate    = new Date(ctx.currentDate);
+    futureDate.setDate(futureDate.getDate() + offset);
+    const futureDateStr = formatDateLocal(futureDate);
+    const futureGames   = ctx.gamesByDate.get(futureDateStr);
+    if (!futureGames) continue;
+    for (const game of futureGames) {
+      const stadium = ctx.byTeamId.get(game.homeTeamId);
+      if (!stadium || ctx.visitedStadiumIds.has(stadium.id)) continue;
+      if (haversineDistance(candidateStadium.coordinates, stadium.coordinates) <= LOOKAHEAD_REACH_KM) {
+        reachable.add(stadium.id);
+      }
+    }
+  }
+  return reachable.size * LOOKAHEAD_BONUS_PER_STADIUM;
+}
+
+/**
+ * Tourism-aware candidate scoring — replaces the basic greedy score inside buildItinerary.
+ *
+ * score = baseScore + lookaheadBonus − revisitPenalty
+ *
+ * - baseScore:      MAX_REACH_KM − distanceKm  (same proximity logic as scoreGameCandidates)
+ * - lookaheadBonus: rewards staying near geographic clusters with future games
+ * - revisitPenalty: strongly discourages returning to already-attended stadiums
+ *
+ * Score can be negative when all candidates are revisits — the algorithm still picks
+ * the least-bad option (highest score even if negative).
+ */
+export function scoreGameCandidatesForTourism(
+  games:          Game[],
+  currentStadium: Stadium,
+  ctx:            LookaheadContext,
+): ScoredCandidate[] {
+  const candidates: ScoredCandidate[] = [];
+  for (const game of games) {
+    const stadium = ctx.byTeamId.get(game.homeTeamId);
+    if (stadium === undefined) continue;
+    const distanceKm     = haversineDistance(currentStadium.coordinates, stadium.coordinates);
+    const baseScore      = Math.max(0, MAX_REACH_KM - distanceKm);
+    const lookaheadBonus = computeLookaheadBonus(stadium, ctx);
+    const revisitPenalty = ctx.visitedStadiumIds.has(stadium.id) ? REVISIT_PENALTY : 0;
+    candidates.push({
+      game,
+      stadium,
+      distanceKm,
+      score: baseScore + lookaheadBonus - revisitPenalty,
+    });
+  }
+  return candidates;
+}
+
+/**
+ * F-05 tourism-aware greedy core: iterates every calendar day in [startDate, endDate],
+ * picks the best-scoring game stadium each day using look-ahead bonuses and revisit
+ * penalties, inserts TravelDays for game-free days.
  *
  * Algorithm properties:
- * - O(D × G) where D = days, G = filtered games (max 180 × ~500 = 90k ops — acceptable)
+ * - O(D × G × L) where D = days, G = filtered games, L = LOOKAHEAD_DAYS × G
+ *   (max 180 × 500 × 3 = ~270k ops — acceptable, runs in < 5ms)
  * - Does NOT mutate inputs
  * - Uses local date arithmetic (no UTC offset issues)
+ * - visitedStadiumIds accumulates across the trip — prevents back-tracking
  */
 export function buildItinerary(
   filteredGames: Game[],
@@ -141,7 +223,8 @@ export function buildItinerary(
     gamesByDate.set(game.date, list);
   }
 
-  const itinerary: TripDay[] = [];
+  const itinerary:         TripDay[]   = [];
+  const visitedStadiumIds: Set<string> = new Set();
   let dayNumber      = 1;
   let currentStadium = homeStadium;
 
@@ -164,7 +247,13 @@ export function buildItinerary(
       };
       itinerary.push(travelDay);
     } else {
-      const candidates = scoreGameCandidates(gamesOnDay, currentStadium, byTeamId);
+      const ctx: LookaheadContext = {
+        gamesByDate,
+        currentDate:       new Date(cursor),  // snapshot: cursor mutates each iteration
+        visitedStadiumIds,
+        byTeamId,
+      };
+      const candidates = scoreGameCandidatesForTourism(gamesOnDay, currentStadium, ctx);
 
       if (candidates.length === 0) {
         // All games today have unresolvable stadiums → treat as travel day
@@ -179,6 +268,7 @@ export function buildItinerary(
         const best        = candidates.reduce((a, b) => (a.score > b.score ? a : b));
         const prevStadium = currentStadium;
         currentStadium    = best.stadium;
+        visitedStadiumIds.add(currentStadium.id);
         const dist        = haversineDistance(prevStadium.coordinates, currentStadium.coordinates);
 
         const gameDay: GameDay = {

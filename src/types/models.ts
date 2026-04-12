@@ -143,7 +143,9 @@ export interface RoutingOptions {
 
 /**
  * A game candidate scored during the greedy pass.
- * score > 0 means reachable; higher = closer = better.
+ * Higher score = better candidate. Score includes proximity, look-ahead bonus, and
+ * revisit penalty — see scoreGameCandidatesForTourism for the full calculation.
+ * Score may be negative when all candidates are revisited stadiums.
  */
 export interface ScoredCandidate {
   game:       Game;

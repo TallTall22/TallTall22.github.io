@@ -8,9 +8,11 @@ import {
   buildStadiumByIdMap,
   estimateTravelMinutes,
   scoreGameCandidates,
+  scoreGameCandidatesForTourism,
   buildItinerary,
   assembleTripFromItinerary,
 } from '@/utils/routingAlgorithm';
+import type { LookaheadContext } from '@/utils/routingAlgorithm';
 
 // MAX_REACH_KM is an internal constant (not exported); mirror the value here.
 const MAX_REACH_KM = 5_000;
@@ -295,7 +297,119 @@ describe('buildItinerary()', () => {
   });
 });
 
-// ── assembleTripFromItinerary ─────────────────────────────────────────────────
+// ── scoreGameCandidatesForTourism ─────────────────────────────────────────────
+
+describe('scoreGameCandidatesForTourism()', () => {
+  // PHI is between NYY and BOS — useful for cluster tests
+  const PHI = makeStadium({ id: 'PHI', teamId: '143', coordinates: { lat: 39.9061, lng: -75.1665 } });
+  const map4 = buildStadiumByTeamIdMap([NYY, BOS, LAD, PHI]);
+
+  function makeCtx(overrides: Partial<LookaheadContext> = {}): LookaheadContext {
+    return {
+      gamesByDate:       new Map(),
+      currentDate:       new Date(2026, 5, 1),  // June 1
+      visitedStadiumIds: new Set(),
+      byTeamId:          map4,
+      ...overrides,
+    };
+  }
+
+  it('returns [] for empty games', () => {
+    expect(scoreGameCandidatesForTourism([], NYY, makeCtx())).toHaveLength(0);
+  });
+
+  it('drops game with unknown homeTeamId', () => {
+    const g = makeGame({ homeTeamId: '999' });
+    expect(scoreGameCandidatesForTourism([g], NYY, makeCtx())).toHaveLength(0);
+  });
+
+  it('baseScore alone equals proximity score when no lookahead and no revisit', () => {
+    const g   = makeGame({ homeTeamId: '147' }); // NYY (0 km from self)
+    const ctx = makeCtx({ byTeamId: buildStadiumByTeamIdMap([NYY]) });
+    const [c] = scoreGameCandidatesForTourism([g], NYY, ctx);
+    // base = MAX_REACH_KM − 0 = 5000; lookahead = 0; revisit = 0
+    expect(c!.score).toBeCloseTo(5_000, 0);
+  });
+
+  it('revisit penalty reduces score by REVISIT_PENALTY (4000)', () => {
+    const g   = makeGame({ homeTeamId: '147' }); // NYY
+    const ctx = makeCtx({
+      byTeamId:          buildStadiumByTeamIdMap([NYY]),
+      visitedStadiumIds: new Set(['NYY']),
+    });
+    const [c] = scoreGameCandidatesForTourism([g], NYY, ctx);
+    // base≈5000 − revisit=4000 = ~1000
+    expect(c!.score).toBeCloseTo(5_000 - 4_000, 0);
+  });
+
+  it('lookahead bonus added when future games are reachable from candidate', () => {
+    // NYY game today; BOS game tomorrow is within 600 km of NYY → +300 bonus
+    const todayGame    = makeGame({ gameId: 'g-today', homeTeamId: '147', date: '2026-06-01' });
+    const tomorrowGame = makeGame({ gameId: 'g-tmrw',  homeTeamId: '111', date: '2026-06-02' });
+    const gbd = new Map<string, typeof tomorrowGame[]>([['2026-06-02', [tomorrowGame]]]);
+    const ctx = makeCtx({
+      gamesByDate: gbd,
+      currentDate: new Date(2026, 5, 1),
+      byTeamId:    buildStadiumByTeamIdMap([NYY, BOS]),
+    });
+    const [c] = scoreGameCandidatesForTourism([todayGame], NYY, ctx);
+    // base≈5000 + lookahead=300 (BOS is ~300km from NYY, within 600km threshold)
+    expect(c!.score).toBeGreaterThan(5_000);
+  });
+
+  it('non-visited candidate beats revisited candidate even if slightly further', () => {
+    // Both PHI and BOS have games today; NYY is home.
+    // PHI (~180km): not visited → wins over BOS (~300km) if BOS is visited
+    const gPHI = makeGame({ gameId: 'phi', homeTeamId: '143' }); // PHI
+    const gBOS = makeGame({ gameId: 'bos', homeTeamId: '111' }); // BOS
+    const ctx  = makeCtx({
+      visitedStadiumIds: new Set(['BOS']),
+      byTeamId:          map4,
+    });
+    const cs  = scoreGameCandidatesForTourism([gPHI, gBOS], NYY, ctx);
+    const phi = cs.find((c) => c.stadium.id === 'PHI')!;
+    const bos = cs.find((c) => c.stadium.id === 'BOS')!;
+    expect(phi.score).toBeGreaterThan(bos.score);
+  });
+});
+
+// ── buildItinerary (tourism behaviour) ───────────────────────────────────────
+
+describe('buildItinerary() — tourism revisit avoidance', () => {
+  // NYY and BOS both within the same northeast cluster; LAD is far west
+  const map3 = buildStadiumByTeamIdMap([NYY, BOS, LAD]);
+
+  it('does not repeat the same stadium if a new stadium is available the next day', () => {
+    // Day 1: NYY game → visits NYY
+    // Day 2: NYY game AND BOS game → should prefer BOS (new) over NYY (revisit)
+    const games = [
+      makeGame({ gameId: 'd1-nyy', date: '2026-06-01', homeTeamId: '147' }), // NYY
+      makeGame({ gameId: 'd2-nyy', date: '2026-06-02', homeTeamId: '147' }), // NYY again
+      makeGame({ gameId: 'd2-bos', date: '2026-06-02', homeTeamId: '111' }), // BOS
+    ];
+    const r = buildItinerary(games, NYY, map3, '2026-06-01', '2026-06-02');
+    expect(r).toHaveLength(2);
+    expect(r[0]!.type).toBe('game_day');
+    expect(r[1]!.type).toBe('game_day');
+    if (r[0]!.type === 'game_day') expect(r[0]!.stadiumId).toBe('NYY');
+    // Day 2 should go to BOS, not revisit NYY
+    if (r[1]!.type === 'game_day') expect(r[1]!.stadiumId).toBe('BOS');
+  });
+
+  it('still picks revisited stadium if it is the only option', () => {
+    // Only NYY games across two days — no choice but to revisit
+    const games = [
+      makeGame({ gameId: 'd1', date: '2026-06-01', homeTeamId: '147' }),
+      makeGame({ gameId: 'd2', date: '2026-06-02', homeTeamId: '147' }),
+    ];
+    const r = buildItinerary(games, NYY, buildStadiumByTeamIdMap([NYY]), '2026-06-01', '2026-06-02');
+    expect(r[0]!.type).toBe('game_day');
+    expect(r[1]!.type).toBe('game_day');
+    if (r[1]!.type === 'game_day') expect(r[1]!.stadiumId).toBe('NYY'); // forced revisit
+  });
+});
+
+
 
 describe('assembleTripFromItinerary()', () => {
   const opts: RoutingOptions = { startDate: '2026-06-01', endDate: '2026-06-03', homeStadiumId: 'NYY' };
