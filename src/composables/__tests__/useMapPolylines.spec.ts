@@ -143,10 +143,15 @@ describe('useMapPolylines', () => {
       segmentType: 'game_day',
       dayIndex: 0,
     });
+    // F-09: segments must carry stadiumIds for polyline cross-highlight
+    expect(segments.value[0]?.fromStadiumId).toBe('NYY');
+    expect(segments.value[0]?.toStadiumId).toBe('BOS');
     expect(segments.value[1]).toMatchObject({
       segmentType: 'game_day',
       dayIndex: 1,
     });
+    expect(segments.value[1]?.fromStadiumId).toBe('BOS');
+    expect(segments.value[1]?.toStadiumId).toBe('CHC');
   });
 
   // ── 3: TravelDay with no stadiumId ──────────────────────────────────────────

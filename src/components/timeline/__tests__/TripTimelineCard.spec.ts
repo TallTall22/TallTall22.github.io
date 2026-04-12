@@ -47,6 +47,7 @@ function makeGameDayVM(overrides: Partial<TimelineDayViewModel> = {}): TimelineD
     homeTeamNickname: 'Yankees',
     awayTeamNickname: 'Red Sox',
     distanceKm:       null,
+    stadiumId:        'NYY',
     ...overrides,
   };
 }
@@ -67,6 +68,7 @@ function makeTravelDayVM(overrides: Partial<TimelineDayViewModel> = {}): Timelin
     homeTeamNickname: null,
     awayTeamNickname: null,
     distanceKm:       342,
+    stadiumId:        null,
     ...overrides,
   };
 }
