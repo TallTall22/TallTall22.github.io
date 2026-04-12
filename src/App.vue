@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 import StadiumSelector from './components/control-panel/StadiumSelector.vue';
 import QuickStartPresets from './components/control-panel/QuickStartPresets.vue';
+import TripActionBar from './components/control-panel/TripActionBar.vue';
 import MapViewContainer from '@/components/map/MapViewContainer.vue';
 import TripTimelineStrip from '@/components/timeline/TripTimelineStrip.vue';
 import { useTripStore } from '@/stores/tripStore';
 import { useGameFilter } from '@/composables/useGameFilter';
 import { useRoutingAlgorithm } from '@/composables/useRoutingAlgorithm';
+import { useTripShare } from '@/composables/useTripShare';
 import type { RoutingAlgorithmErrorCode } from '@/types/models';
 
 const store = useTripStore();
@@ -18,6 +20,10 @@ const { filteredGames, isLoading: isFiltering } = useGameFilter();
 // F-05: routing algorithm — watches filteredGames, writes store.selectedTrip
 // Passed filteredGames explicitly to prevent a second useGameFilter instance.
 const { isRouting, routingError } = useRoutingAlgorithm(filteredGames);
+
+// F-10.3: restore trip state from URL param on mount
+const { restoreFromUrl } = useTripShare();
+onMounted(() => { restoreFromUrl(); });
 
 const isBusy = computed(() => isFiltering.value || isRouting.value);
 
@@ -51,6 +57,9 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
           <!-- Left: Control Panel -->
           <v-col cols="12" md="5" lg="4" class="control-panel-col">
             <div class="control-panel-inner pa-4">
+              <!-- F-10: Trip Action Bar (Reset / Export / Share) -->
+              <TripActionBar :is-busy="isBusy" class="mb-4" />
+
               <!-- F-03: Quick Start Presets -->
               <QuickStartPresets class="mb-4" :disabled="isBusy" />
 
@@ -122,5 +131,36 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
   overflow: hidden;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
+}
+</style>
+
+<!-- F-10.2: Print stylesheet — hides map/timeline; formats control panel for PDF/print -->
+<style>
+@media print {
+  .map-col,
+  .timeline-row,
+  .v-app-bar {
+    display: none !important;
+  }
+
+  .control-panel-col {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-right: none !important;
+    overflow: visible !important;
+  }
+
+  .main-content {
+    padding-top: 0 !important;
+    height: auto !important;
+  }
+
+  .main-layout {
+    height: auto !important;
+  }
+
+  .top-row {
+    overflow: visible !important;
+  }
 }
 </style>

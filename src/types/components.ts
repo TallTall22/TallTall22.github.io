@@ -153,3 +153,10 @@ export interface TripTimelineStripProps {
   // intentionally empty — Organism reads composable, not props
 }
 
+// ── F-10: Trip Action Bar ─────────────────────────────────────────────────────
+
+export interface TripActionBarProps {
+  /** Disables all buttons when routing/filtering is in progress */
+  isBusy?: boolean;
+}
+

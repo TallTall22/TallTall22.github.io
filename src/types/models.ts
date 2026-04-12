@@ -164,3 +164,10 @@ export interface RoutingResult {
   totalGamesAttended: number;
   totalTravelDays:    number;
 }
+
+// ── F-10: Export & Share Error Codes ─────────────────────────────────────────
+
+export type ExportErrorCode =
+  | 'NO_TRIP'         // selectedTrip is null — nothing to export/share
+  | 'CLIPBOARD_FAIL'  // navigator.clipboard.writeText and execCommand fallback both failed
+  | 'ENCODE_FAIL';    // URL-safe base64 encoding threw unexpectedly
