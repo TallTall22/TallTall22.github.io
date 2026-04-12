@@ -22,6 +22,21 @@ describe('extractTimeZoneAbbr', () => {
     expect(result).toBe('MDT')
   })
 
+  it('returns EST for America/New_York in November (standard time)', () => {
+    const result = extractTimeZoneAbbr('America/New_York', new Date('2026-11-15T20:00:00Z'))
+    expect(result).toBe('EST')
+  })
+
+  it('returns CST for America/Chicago in November (standard time)', () => {
+    const result = extractTimeZoneAbbr('America/Chicago', new Date('2026-11-15T20:00:00Z'))
+    expect(result).toBe('CST')
+  })
+
+  it('returns PST for America/Los_Angeles in November (standard time)', () => {
+    const result = extractTimeZoneAbbr('America/Los_Angeles', new Date('2026-11-15T20:00:00Z'))
+    expect(result).toBe('PST')
+  })
+
   it('returns empty string for invalid timezone (no throw)', () => {
     const result = extractTimeZoneAbbr('Invalid/Zone', new Date())
     expect(result).toBe('')
@@ -42,6 +57,11 @@ describe('formatLocalTime', () => {
   it('handles CDT timezone', () => {
     const result = formatLocalTime('6:05 PM', 'America/Chicago', '2026-04-06')
     expect(result).toBe('6:05 PM CDT')
+  })
+
+  it('appends EST timezone abbreviation in winter', () => {
+    const result = formatLocalTime('7:05 PM', 'America/New_York', '2026-11-15')
+    expect(result).toBe('7:05 PM EST')
   })
 })
 

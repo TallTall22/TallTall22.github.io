@@ -43,7 +43,7 @@ const mountOpts = { global: { plugins: [vuetify] } };
 function makeGameDayVM(dayNumber: number): TimelineDayViewModel {
   return {
     dayNumber,
-    date:             `2026-04-0${dayNumber}`,
+    date:             `2026-04-${String(dayNumber).padStart(2, '0')}`,
     dayOfWeek:        'Mon',
     type:             'game_day',
     matchupLabel:     'Red Sox @ Yankees',
