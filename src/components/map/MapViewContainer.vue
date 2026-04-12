@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { ref, shallowRef, provide, onMounted, onBeforeUnmount } from 'vue';
+import { ref, shallowRef, provide, onMounted, onBeforeUnmount, computed } from 'vue';
 import L from 'leaflet';
 import { LEAFLET_MAP_KEY } from '@/composables/mapInjectionKeys';
 import { useMapStore } from '@/stores/mapStore';
 import { useMapPolylines } from '@/composables/useMapPolylines';
 import { useMapBounds } from '@/composables/useMapBounds';
+import { useStadiumMarkers } from '@/composables/useStadiumMarkers';
 import MapPolylineLayer from './MapPolylineLayer.vue';
+import MapMarkerLayer from './MapMarkerLayer.vue';
 import MapBoundsManager from './MapBoundsManager.vue';
 import MapLoadingOverlay from './MapLoadingOverlay.vue';
 import MapErrorBanner from './MapErrorBanner.vue';
 import type { MapViewProps } from '@/types';
 
-withDefaults(defineProps<MapViewProps>(), {
+const props = withDefaults(defineProps<MapViewProps>(), {
   isLoading: false,
   hasError:  false,
   errorMsg:  null,
@@ -20,9 +22,17 @@ withDefaults(defineProps<MapViewProps>(), {
 const mapStore = useMapStore();
 const { segments } = useMapPolylines();
 const { bounds }   = useMapBounds(segments);
+const { markers, error: markerError, isLoading: markerIsLoading } = useStadiumMarkers();
 
 const mapEl       = ref<HTMLDivElement | null>(null);
 const mapInstance = shallowRef<L.Map | null>(null);
+
+const mapErrorMessage = computed<string | null>(() => {
+  if (props.hasError && props.errorMsg) return props.errorMsg;
+  if (markerError.value)                return markerError.value;
+  if (mapStore.hasError)                return mapStore.errorMsg ?? 'Map error';
+  return null;
+});
 
 // Must provide at script-setup level so child components can inject synchronously
 provide(LEAFLET_MAP_KEY, mapInstance);
@@ -87,14 +97,15 @@ onBeforeUnmount(() => {
 
     <template v-if="mapInstance">
       <MapPolylineLayer :segments="segments" />
+      <MapMarkerLayer :markers="markers" />
       <MapBoundsManager :bounds="bounds" />
     </template>
 
-    <MapLoadingOverlay :visible="isLoading ?? false" />
+    <MapLoadingOverlay :visible="(props.isLoading ?? false) || markerIsLoading" />
 
     <MapErrorBanner
-      v-if="(hasError && errorMsg) || mapStore.hasError"
-      :message="mapStore.hasError ? (mapStore.errorMsg ?? 'Map error') : (errorMsg ?? '')"
+      v-if="mapErrorMessage !== null"
+      :message="mapErrorMessage"
     />
   </div>
 </template>

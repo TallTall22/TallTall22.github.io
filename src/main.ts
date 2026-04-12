@@ -4,6 +4,9 @@ import App from './App.vue';
 // Leaflet CSS (must be before Vuetify to allow overrides)
 import 'leaflet/dist/leaflet.css';
 
+// F-07 marker / popup styles
+import '@/assets/main.css';
+
 // Vuetify
 import 'vuetify/styles';
 import '@mdi/font/css/materialdesignicons.css';
