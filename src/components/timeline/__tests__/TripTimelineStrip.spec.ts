@@ -98,8 +98,9 @@ describe('TripTimelineStrip', () => {
   it('renders loading state when isLoading is true', () => {
     mockUseTimeline({ timelineDays: [], isLoading: true, error: null });
     const wrapper = mount(TripTimelineStrip, getMountOpts());
-    // v-progress-linear renders when loading
-    expect(wrapper.find('.v-progress-linear').exists()).toBe(true);
+    // TimelineSkeletonStrip renders 8 skeleton cards when loading
+    expect(wrapper.find('[data-testid="timeline-skeleton-strip"]').exists()).toBe(true);
+    expect(wrapper.findAll('.skeleton-card')).toHaveLength(8);
   });
 
   it('renders error alert when error is set', () => {
