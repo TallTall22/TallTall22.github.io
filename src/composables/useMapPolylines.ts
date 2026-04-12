@@ -85,11 +85,13 @@ export function useMapPolylines(): UseMapPolylinesReturn {
         fromDay.type === 'game_day' ? 'game_day' : 'travel_day';
 
       result.push({
-        id:          `${fromId}|${toId}|day${i}`,
-        from:        { lat: fromStadium.coordinates.lat, lng: fromStadium.coordinates.lng },
-        to:          { lat: toStadium.coordinates.lat,   lng: toStadium.coordinates.lng },
+        id:            `${fromId}|${toId}|day${i}`,
+        from:          { lat: fromStadium.coordinates.lat, lng: fromStadium.coordinates.lng },
+        to:            { lat: toStadium.coordinates.lat,   lng: toStadium.coordinates.lng },
         segmentType,
-        dayIndex:    i,
+        dayIndex:      i,
+        fromStadiumId: fromId,
+        toStadiumId:   toId,
       });
     }
 

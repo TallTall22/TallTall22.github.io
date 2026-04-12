@@ -2,6 +2,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { shallowRef, nextTick } from 'vue';
+import { createPinia, setActivePinia } from 'pinia';
 import { LEAFLET_MAP_KEY } from '@/composables/mapInjectionKeys';
 import type { StadiumMarkerData, MarkerStatus } from '@/types';
 
@@ -62,10 +63,13 @@ function mountComponent(
   mapValue: L.Map | null = mockMapInstance,
 ) {
   const mapRef = shallowRef(mapValue);
+  const pinia  = createPinia();
+  setActivePinia(pinia);
   return {
     wrapper: mount(MapMarkerLayer, {
       props: { markers },
       global: {
+        plugins: [pinia],
         provide: {
           [LEAFLET_MAP_KEY as symbol]: mapRef,
         },

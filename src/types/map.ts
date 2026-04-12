@@ -43,6 +43,10 @@ export interface MapPolylineSegment {
   readonly segmentType: SegmentType;
   /** Index of the "from" day in the itinerary (0-based) */
   readonly dayIndex:    number;
+  /** Stadium id of the 'from' stop — used by F-09 polyline highlight */
+  readonly fromStadiumId: string;
+  /** Stadium id of the 'to' stop — used by F-09 polyline highlight */
+  readonly toStadiumId:   string;
 }
 
 /**

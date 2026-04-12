@@ -15,11 +15,13 @@ function makeSegment(
   index: number = 0,
 ): MapPolylineSegment {
   return {
-    id: `seg-${index}`,
-    from: { lat: fromLat, lng: fromLng },
-    to: { lat: toLat, lng: toLng },
-    segmentType: 'game_day',
-    dayIndex: index,
+    id:            `seg-${index}`,
+    from:          { lat: fromLat, lng: fromLng },
+    to:            { lat: toLat, lng: toLng },
+    segmentType:   'game_day',
+    dayIndex:      index,
+    fromStadiumId: `from-${index}`,
+    toStadiumId:   `to-${index}`,
   };
 }
 

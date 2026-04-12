@@ -26,6 +26,7 @@ const { markers, error: markerError, isLoading: markerIsLoading } = useStadiumMa
 
 const mapEl       = ref<HTMLDivElement | null>(null);
 const mapInstance = shallowRef<L.Map | null>(null);
+let   resizeObserver: ResizeObserver | null = null;
 
 const mapErrorMessage = computed<string | null>(() => {
   if (props.hasError && props.errorMsg) return props.errorMsg;
@@ -74,6 +75,14 @@ onMounted(() => {
 
     mapInstance.value = map;
     mapStore.setReady(true);
+
+    // Fix: Leaflet initializes with incorrect container size when the flexbox layout
+    // hasn't settled yet at onMounted time. ResizeObserver detects the first real
+    // layout paint and any subsequent container resizes, then realigns all layers.
+    resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    resizeObserver.observe(mapEl.value);
   } catch (err) {
     mapStore.setError('Map initialization failed. Please refresh the page.');
     if (import.meta.env.DEV) {
@@ -83,6 +92,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  resizeObserver = null;
   if (mapInstance.value) {
     mapInstance.value.remove();
     mapInstance.value = null;

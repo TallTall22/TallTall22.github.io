@@ -41,3 +41,25 @@ export function createMarkerDivIcon(status: MarkerStatus): L.DivIcon {
     tooltipAnchor: [0, -(size / 2 + 2)],
   });
 }
+
+/**
+ * Creates a highlighted Leaflet DivIcon for F-09 cross-highlight interaction.
+ * 1.6× larger than normal with a gold ring and box-shadow glow — no `<style>` injection.
+ * Called by MapMarkerLayer when hoveredStadiumId matches this marker's stadiumId.
+ */
+export function createHighlightedMarkerDivIcon(status: MarkerStatus): L.DivIcon {
+  const baseSize = STATUS_SIZES[status];
+  const size     = Math.round(baseSize * 1.6);
+  const color    = STATUS_COLORS[status];
+
+  const html = `<div class="mlb-marker mlb-marker--${status} mlb-marker--highlighted" style="width:${size}px;height:${size}px;background-color:${color};border:4px solid #FFD700;border-radius:9999px;box-shadow:0 0 0 4px rgba(255,215,0,0.45),0 2px 8px rgba(0,0,0,0.45);transform:scale(1.1);transition:all 0.2s ease;cursor:pointer;"></div>`;
+
+  return L.divIcon({
+    html,
+    className:     '',
+    iconSize:      [size, size],
+    iconAnchor:    [size / 2, size / 2],
+    popupAnchor:   [0, -(size / 2 + 4)],
+    tooltipAnchor: [0, -(size / 2 + 2)],
+  });
+}

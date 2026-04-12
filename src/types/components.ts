@@ -132,6 +132,8 @@ export interface TimelineDayViewModel {
   awayTeamNickname: string | null;
   /** Distance from previous day in km — optional, from TripDayBase.distanceFromPrevious */
   distanceKm:       number | null;
+  /** Stadium id for cross-highlight (F-09). Null for travel days without a destination. */
+  stadiumId:        string | null;
 }
 
 // ── F-08: Timeline Component Props ───────────────────────────────────────────

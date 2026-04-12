@@ -8,10 +8,9 @@ export const useTripStore = defineStore('trip', () => {
   const endDate = ref<ISODateString | null>(null);
   const homeStadiumId = ref<string | null>(null);
   const selectedTrip = ref<Trip | null>(null);
-  const isLoading = ref(false);
-  const _tripGenId = ref<number>(0);
+  const _tripGenId   = ref<number>(0);
 
-  const hasDateRange = computed(() => startDate.value !== null && endDate.value !== null);
+  const hasDateRange= computed(() => startDate.value !== null && endDate.value !== null);
   const hasHomeStadium = computed(() => homeStadiumId.value !== null);
 
   function setStartDate(date: ISODateString | null): void {
@@ -56,7 +55,6 @@ export const useTripStore = defineStore('trip', () => {
     endDate.value       = null;
     homeStadiumId.value = null;
     selectedTrip.value  = null;
-    isLoading.value     = false;
     _tripGenId.value    = 0;
   }
 
@@ -66,7 +64,6 @@ export const useTripStore = defineStore('trip', () => {
     startDate,
     endDate,
     selectedTrip,
-    isLoading,
     hasDateRange,
     setStartDate,
     setEndDate,

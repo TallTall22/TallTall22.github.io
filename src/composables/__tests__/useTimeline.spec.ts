@@ -148,6 +148,8 @@ describe('useTimeline', () => {
     expect(timelineDays.value[0]?.type).toBe('game_day');
     expect(timelineDays.value[0]?.homeTeamLogo).toBe('https://example.com/logo/nyy.svg');
     expect(timelineDays.value[0]?.awayTeamLogo).toBe('https://example.com/logo/bos.svg');
+    // F-09: game_day should carry the stadiumId for cross-highlight
+    expect(timelineDays.value[0]?.stadiumId).toBe('NYY');
   });
 
   // ── 3: TravelDay → null game fields ──────────────────────────────────────────
@@ -170,6 +172,8 @@ describe('useTimeline', () => {
     expect(day?.awayTeamLogo).toBe('');
     expect(day?.homeTeamNickname).toBeNull();
     expect(day?.awayTeamNickname).toBeNull();
+    // F-09: travel_day without stadiumId should have null cross-highlight id
+    expect(day?.stadiumId).toBeNull();
   });
 
   // ── 4: CRITICAL — teamId vs id lookup distinction ────────────────────────────
