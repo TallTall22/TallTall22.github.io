@@ -99,10 +99,6 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
   overflow: hidden;
 }
 
-.fill-height {
-  height: 100%;
-}
-
 .control-panel-col {
   overflow-y: auto;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
