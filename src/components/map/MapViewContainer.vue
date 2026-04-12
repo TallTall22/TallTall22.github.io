@@ -118,7 +118,7 @@ onBeforeUnmount(() => {
     <MapErrorBanner
       v-if="mapErrorMessage !== null"
       :message="mapErrorMessage"
-      :on-retry="props.onRetry ?? undefined"
+      :on-retry="(props.hasError && props.onRetry) ? props.onRetry : undefined"
     />
   </div>
 </template>

@@ -31,7 +31,7 @@ watch(() => props.message, () => {
             variant="outlined"
             color="error"
             class="ml-2"
-            @click="props.onRetry?.()"
+            @click="props.onRetry()"
           >
             重試
           </v-btn>
