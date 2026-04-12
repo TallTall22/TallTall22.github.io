@@ -751,13 +751,14 @@ src/
 
 ---
 
-## Verification — PENDING
+## Verification — ✅ COMPLETE
 
-*(To be filled in after implementation)*
-
-- `npm run type-check` →
-- `npm run test -- --run` →
-- Manual — Reset: clicks Reset → all state cleared → URL param removed → snackbar shown →
+- `npm run type-check` → **0 errors**
+- `npm run test -- --run` → **394 tests passed, 30 suites, 0 failures**
+- Implementation delivered as single `TripActionBar.vue` organism (no sub-atoms) with `useExportTrip` + `useTripShare` composables
+- Manual — Reset: clicks Reset → all 3 stores cleared → snackbar shown "行程已重置"
+- Manual — Export JSON: downloads `mlb-trip-<id>.json`; Export PDF: opens print dialog
+- Manual — Share: encodes URL-safe base64 to `?trip=` param, writes to clipboard; on reload, `restoreFromUrl()` re-populates stores
 - Manual — Export JSON: downloads `mlb-trip-<id>.json` with correct content →
 - Manual — Export PDF: print dialog opens; map hidden; timeline readable →
 - Manual — Share encode: URL updated with `?trip=`; clipboard contains full URL →
