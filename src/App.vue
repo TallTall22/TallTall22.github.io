@@ -4,6 +4,7 @@ import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 import StadiumSelector from './components/control-panel/StadiumSelector.vue';
 import QuickStartPresets from './components/control-panel/QuickStartPresets.vue';
 import MapViewContainer from '@/components/map/MapViewContainer.vue';
+import TripTimelineStrip from '@/components/timeline/TripTimelineStrip.vue';
 import { useTripStore } from '@/stores/tripStore';
 import { useGameFilter } from '@/composables/useGameFilter';
 import { useRoutingAlgorithm } from '@/composables/useRoutingAlgorithm';
@@ -44,30 +45,38 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
     </v-app-bar>
 
     <v-main class="main-content">
-      <v-row no-gutters align="stretch" class="fill-height">
-        <!-- Left: Control Panel -->
-        <v-col cols="12" md="5" lg="4" class="control-panel-col">
-          <div class="control-panel-inner pa-4">
-            <!-- F-03: Quick Start Presets -->
-            <QuickStartPresets class="mb-4" :disabled="isBusy" />
+      <div class="main-layout">
+        <!-- Top: two-column row (control panel + map) -->
+        <v-row no-gutters align="stretch" class="top-row">
+          <!-- Left: Control Panel -->
+          <v-col cols="12" md="5" lg="4" class="control-panel-col">
+            <div class="control-panel-inner pa-4">
+              <!-- F-03: Quick Start Presets -->
+              <QuickStartPresets class="mb-4" :disabled="isBusy" />
 
-            <!-- F-02: Home Stadium Selection -->
-            <StadiumSelector class="mb-4" />
+              <!-- F-02: Home Stadium Selection -->
+              <StadiumSelector class="mb-4" />
 
-            <!-- F-01: Date Range -->
-            <DateRangePicker :readonly="isBusy" @range-confirmed="onRangeConfirmed" />
-          </div>
-        </v-col>
+              <!-- F-01: Date Range -->
+              <DateRangePicker :readonly="isBusy" @range-confirmed="onRangeConfirmed" />
+            </div>
+          </v-col>
 
-        <!-- Right: Map -->
-        <v-col cols="12" md="7" lg="8" class="map-col">
-          <MapViewContainer
-            :is-loading="isBusy"
-            :has-error="!!routingError"
-            :error-msg="routingErrorMessage"
-          />
-        </v-col>
-      </v-row>
+          <!-- Right: Map -->
+          <v-col cols="12" md="7" lg="8" class="map-col">
+            <MapViewContainer
+              :is-loading="isBusy"
+              :has-error="!!routingError"
+              :error-msg="routingErrorMessage"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- Bottom: F-08 Timeline Strip -->
+        <div class="timeline-row">
+          <TripTimelineStrip />
+        </div>
+      </div>
     </v-main>
   </v-app>
 </template>
@@ -78,14 +87,23 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
   height: 100vh;
 }
 
-.fill-height {
+.main-layout {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+}
+
+.top-row {
+  flex: 1;
+  min-height: 0; /* allow flex child to shrink below content size */
+  overflow: hidden;
 }
 
 .control-panel-col {
   overflow-y: auto;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
   background: #f5f5f5;
+  height: 100%;
 }
 
 .control-panel-inner {
@@ -94,6 +112,15 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
 
 .map-col {
   height: 100%;
-  min-height: 500px;
+  min-height: 0;
+}
+
+.timeline-row {
+  height: 180px;
+  min-height: 180px;
+  max-height: 180px;
+  overflow: hidden;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
 }
 </style>
