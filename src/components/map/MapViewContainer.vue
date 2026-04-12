@@ -78,10 +78,17 @@ onMounted(() => {
     mapStore.setReady(true);
 
     // Fix: Leaflet initializes with incorrect container size when the flexbox layout
-    // hasn't settled yet at onMounted time. ResizeObserver detects the first real
-    // layout paint and any subsequent container resizes, then realigns all layers.
-    resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize();
+    // hasn't settled yet at onMounted time (or when the map tab is hidden via CSS).
+    // Guard: only call invalidateSize when the container has real dimensions — calling
+    // it with a 0×0 size (e.g. eager tab hidden by Vuetify) corrupts Leaflet's
+    // internal pan-compensation state, causing markers to jump on first tab switch.
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          map.invalidateSize();
+        }
+      }
     });
     resizeObserver.observe(mapEl.value);
   } catch (err) {
