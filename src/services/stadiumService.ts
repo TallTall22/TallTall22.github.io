@@ -31,6 +31,7 @@ function isStadiumArray(data: unknown): data is Stadium[] {
     const s = item as Record<string, unknown>;
     if (
       typeof s['id']          !== 'string' ||
+      typeof s['teamId']      !== 'string' ||
       typeof s['teamName']    !== 'string' ||
       typeof s['stadiumName'] !== 'string'
     ) return false;
@@ -62,6 +63,12 @@ export async function loadStadiums(): Promise<StadiumLoadResult> {
     }
 
     if (!isStadiumArray(raw)) {
+      return { stadiums: [], error: 'PARSE_ERROR' };
+    }
+
+    // Guard: all stadium IDs must be unique; duplicates would silently overwrite map entries
+    const idSet = new Set(raw.map((s) => s.id));
+    if (idSet.size !== raw.length) {
       return { stadiums: [], error: 'PARSE_ERROR' };
     }
 
