@@ -13,11 +13,9 @@ import type { Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTripStore } from '@/stores/tripStore';
 import { computeTrip } from '@/services/routingService';
-import type { Game, Trip, RoutingAlgorithmErrorCode } from '@/types/models';
+import type { Game, RoutingAlgorithmErrorCode } from '@/types/models';
 
 export interface UseRoutingAlgorithmReturn {
-  /** The last successfully computed trip; null if not yet computed or on error. */
-  generatedTrip: Ref<Trip | null>;
   /** true while computeTrip() is in-flight. */
   isRouting:     Ref<boolean>;
   /** Last routing error code; null = no error. */
@@ -28,7 +26,6 @@ export function useRoutingAlgorithm(filteredGames: Ref<Game[]>): UseRoutingAlgor
   const store = useTripStore();
   const { homeStadiumId, startDate, endDate } = storeToRefs(store);
 
-  const generatedTrip = ref<Trip | null>(null);
   const isRouting     = ref<boolean>(false);
   const routingError  = ref<RoutingAlgorithmErrorCode | null>(null);
 
@@ -62,11 +59,9 @@ export function useRoutingAlgorithm(filteredGames: Ref<Game[]>): UseRoutingAlgor
     if (!isMounted || requestId !== requestCounter) return;
 
     if (result.error !== null) {
-      routingError.value  = result.error;
-      generatedTrip.value = null;
+      routingError.value = result.error;
       store.setSelectedTrip(null);
     } else {
-      generatedTrip.value = result.trip;
       store.setSelectedTrip(result.trip);
     }
     isRouting.value = false;
@@ -82,5 +77,5 @@ export function useRoutingAlgorithm(filteredGames: Ref<Game[]>): UseRoutingAlgor
     { deep: false, immediate: false },
   );
 
-  return { generatedTrip, isRouting, routingError };
+  return { isRouting, routingError };
 }
