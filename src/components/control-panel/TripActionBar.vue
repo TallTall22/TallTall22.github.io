@@ -119,7 +119,7 @@ async function handleShare(): Promise<void> {
           <span v-bind="tooltipProps">
             <v-btn
               variant="outlined"
-              color="secondary"
+              color="grey-darken-1"
               size="small"
               prepend-icon="mdi-share-variant"
               :disabled="isDisabled || isSharing"
