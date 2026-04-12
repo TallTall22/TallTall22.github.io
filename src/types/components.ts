@@ -1,7 +1,7 @@
 // src/types/components.ts
 import type { ValidationResult, ISODateString, Stadium } from './models';
 import type { QuickStartPreset, PresetAppliedEvent, PresetRegion } from './presets';
-import type { MapPolylineSegment } from './map';
+import type { MapPolylineSegment, StadiumMarkerData } from './map';
 
 // ── StadiumSelector ───────────────────────────────────────────
 export interface StadiumSelectorOption {
@@ -91,6 +91,13 @@ export interface MapViewProps {
   errorMsg?:  string | null;
 }
 
+// ── F-06: Map Polyline Layer ──────────────────────────────────────
 export interface MapPolylineLayerProps {
   segments: MapPolylineSegment[];
 }
+
+// ── F-07: Map Marker Layer ────────────────────────────────────────
+export interface MapMarkerLayerProps {
+  markers: StadiumMarkerData[];
+}
+
