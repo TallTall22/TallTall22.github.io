@@ -1,0 +1,74 @@
+/* ── F-07 Interactive Markers ─────────────────────────────────── */
+
+/* Hover elevation effect for MLB circle markers */
+.mlb-marker {
+  transition: all 0.2s ease;
+}
+
+.mlb-marker:hover {
+  box-shadow: 0 0 12px rgba(0, 45, 114, 0.5) !important;
+  transform: scale(1.2);
+}
+
+/* Popup InfoWindow wrapper — removes default Leaflet padding */
+.stadium-popup-wrapper .leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.stadium-popup-wrapper .leaflet-popup-content {
+  margin: 0;
+  width: 240px !important;
+}
+
+/* InfoWindow card internals */
+.stadium-popup {
+  font-family: inherit;
+}
+
+.stadium-popup__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 8px;
+}
+
+.stadium-popup__logo {
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.stadium-popup__names {
+  min-width: 0;
+}
+
+.stadium-popup__team {
+  font-weight: 700;
+  font-size: 13px;
+  margin: 0;
+  color: #002D72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stadium-popup__stadium {
+  font-size: 12px;
+  margin: 2px 0 0;
+  color: #333333;
+}
+
+.stadium-popup__location {
+  font-size: 11px;
+  margin: 2px 0 0;
+  color: #757575;
+}
+
+.stadium-popup__photo {
+  display: block;
+  width: 100%;
+  height: 135px;
+  object-fit: cover;
+}
