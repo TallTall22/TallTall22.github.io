@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 
-const props = defineProps<{ message: string }>();
+const props = defineProps<{
+  message:  string;
+  onRetry?: (() => void) | null;
+}>();
 
 const dismissed = ref(false);
 
@@ -20,7 +23,19 @@ watch(() => props.message, () => {
         density="compact"
         @click:close="dismissed = true"
       >
-        {{ message }}
+        <div class="error-content">
+          <span>{{ message }}</span>
+          <v-btn
+            v-if="props.onRetry"
+            size="x-small"
+            variant="outlined"
+            color="error"
+            class="ml-2"
+            @click="props.onRetry?.()"
+          >
+            重試
+          </v-btn>
+        </div>
       </v-alert>
     </div>
   </Transition>
@@ -35,6 +50,13 @@ watch(() => props.message, () => {
   z-index: 10;
 }
 
+.error-content {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
 .slide-down-enter-active,
 .slide-down-leave-active {
   transition: all 0.2s ease;
@@ -46,3 +68,4 @@ watch(() => props.message, () => {
   transform: translateY(-8px);
 }
 </style>
+

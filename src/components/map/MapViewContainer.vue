@@ -11,12 +11,13 @@ import MapMarkerLayer from './MapMarkerLayer.vue';
 import MapBoundsManager from './MapBoundsManager.vue';
 import MapLoadingOverlay from './MapLoadingOverlay.vue';
 import MapErrorBanner from './MapErrorBanner.vue';
-import type { MapViewProps } from '@/types';
+import type { MapViewProps } from '@/types/components';
 
 const props = withDefaults(defineProps<MapViewProps>(), {
   isLoading: false,
   hasError:  false,
   errorMsg:  null,
+  onRetry:   null,
 });
 
 const mapStore = useMapStore();
@@ -117,6 +118,7 @@ onBeforeUnmount(() => {
     <MapErrorBanner
       v-if="mapErrorMessage !== null"
       :message="mapErrorMessage"
+      :on-retry="props.onRetry ?? undefined"
     />
   </div>
 </template>
