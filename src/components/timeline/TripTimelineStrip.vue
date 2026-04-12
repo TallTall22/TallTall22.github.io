@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useTimeline } from '@/composables/useTimeline';
+import { useHighlightStore } from '@/stores/highlightStore';
 import TripTimelineCard from './TripTimelineCard.vue';
 import type { TripTimelineStripProps } from '@/types/components';
 
 defineProps<TripTimelineStripProps>();
 
 const { timelineDays, isLoading, error } = useTimeline();
+const highlightStore = useHighlightStore();
 </script>
 
 <template>
@@ -35,12 +37,18 @@ const { timelineDays, isLoading, error } = useTimeline();
     <!-- Cards -->
     <template v-else>
       <div class="timeline-scroll-area" data-testid="timeline-scroll-area">
-        <TripTimelineCard
+        <div
           v-for="day in timelineDays"
           :key="day.dayNumber"
-          :day="day"
           class="timeline-card-item"
-        />
+          @mouseenter="day.stadiumId !== null ? highlightStore.setHovered(day.stadiumId) : undefined"
+          @mouseleave="highlightStore.clearHovered()"
+        >
+          <TripTimelineCard
+            :day="day"
+            :is-active="day.stadiumId !== null && highlightStore.hoveredStadiumId === day.stadiumId"
+          />
+        </div>
       </div>
     </template>
   </div>
