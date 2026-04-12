@@ -1,6 +1,9 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 
+// Leaflet CSS (must be before Vuetify to allow overrides)
+import 'leaflet/dist/leaflet.css';
+
 // Vuetify
 import 'vuetify/styles';
 import '@mdi/font/css/materialdesignicons.css';
@@ -32,4 +35,11 @@ const vuetify = createVuetify({
 
 const pinia = createPinia();
 
-createApp(App).use(vuetify).use(pinia).mount('#app');
+const app = createApp(App);
+
+app.config.errorHandler = (err, _instance, info) => {
+  // eslint-disable-next-line no-console
+  console.error('[Vue] Unhandled error in', info, err);
+};
+
+app.use(vuetify).use(pinia).mount('#app');

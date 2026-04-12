@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 import StadiumSelector from './components/control-panel/StadiumSelector.vue';
 import QuickStartPresets from './components/control-panel/QuickStartPresets.vue';
+import MapViewContainer from '@/components/map/MapViewContainer.vue';
 import { useTripStore } from '@/stores/tripStore';
 import { useGameFilter } from '@/composables/useGameFilter';
 import { useRoutingAlgorithm } from '@/composables/useRoutingAlgorithm';
@@ -38,46 +39,61 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
 
 <template>
   <v-app>
-    <v-app-bar color="primary" dark>
+    <v-app-bar color="primary" dark elevation="2">
       <v-app-bar-title>⚾ MLB Ballpark Tour Planner</v-app-bar-title>
     </v-app-bar>
 
-    <v-main class="pa-4 main-content">
-      <v-container>
-        <v-row justify="center">
-          <v-col cols="12" md="8" lg="6">
+    <v-main class="main-content">
+      <v-row no-gutters align="stretch" class="fill-height">
+        <!-- Left: Control Panel -->
+        <v-col cols="12" md="5" lg="4" class="control-panel-col">
+          <div class="control-panel-inner pa-4">
             <!-- F-03: Quick Start Presets -->
-            <QuickStartPresets
-              class="mb-4"
-              :disabled="isBusy"
-            />
+            <QuickStartPresets class="mb-4" :disabled="isBusy" />
 
             <!-- F-02: Home Stadium Selection -->
-            <StadiumSelector
-              class="mb-4"
-            />
+            <StadiumSelector class="mb-4" />
 
             <!-- F-01: Date Range -->
-            <DateRangePicker
-              @range-confirmed="onRangeConfirmed"
-            />
+            <DateRangePicker :readonly="isBusy" @range-confirmed="onRangeConfirmed" />
+          </div>
+        </v-col>
 
-            <!-- F-05: Routing status (interim display until F-06 map) -->
-            <div v-if="isRouting" class="mt-4 text-center text-medium-emphasis">
-              正在計算最佳路線...
-            </div>
-            <div v-else-if="routingErrorMessage" class="mt-4 text-center text-error">
-              路線計算失敗：{{ routingErrorMessage }}
-            </div>
-          </v-col>
-        </v-row>
-      </v-container>
+        <!-- Right: Map -->
+        <v-col cols="12" md="7" lg="8" class="map-col">
+          <MapViewContainer
+            :is-loading="isBusy"
+            :has-error="!!routingError"
+            :error-msg="routingErrorMessage"
+          />
+        </v-col>
+      </v-row>
     </v-main>
   </v-app>
 </template>
 
 <style scoped>
 .main-content {
-  padding-top: 80px !important;
+  padding-top: var(--v-layout-top);
+  height: 100vh;
+}
+
+.fill-height {
+  height: 100%;
+}
+
+.control-panel-col {
+  overflow-y: auto;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  background: #f5f5f5;
+}
+
+.control-panel-inner {
+  max-width: 480px;
+}
+
+.map-col {
+  height: 100%;
+  min-height: 500px;
 }
 </style>

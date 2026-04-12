@@ -52,9 +52,14 @@ export async function computeTrip(
     return { trip: null, error: 'EMPTY_ITINERARY', totalGamesAttended: 0, totalTravelDays: 0 };
   }
 
-  const trip               = assembleTripFromItinerary(itinerary, options);
   const totalGamesAttended = itinerary.filter((d) => d.type === 'game_day').length;
   const totalTravelDays    = itinerary.filter((d) => d.type === 'travel_day').length;
 
+  // Guard: at least one game must be attended for a valid trip
+  if (totalGamesAttended === 0) {
+    return { trip: null, error: 'NO_GAMES', totalGamesAttended: 0, totalTravelDays };
+  }
+
+  const trip = assembleTripFromItinerary(itinerary, options);
   return { trip, error: null, totalGamesAttended, totalTravelDays };
 }

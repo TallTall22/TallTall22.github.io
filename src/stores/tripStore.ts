@@ -9,7 +9,6 @@ export const useTripStore = defineStore('trip', () => {
   const homeStadiumId = ref<string | null>(null);
   const selectedTrip = ref<Trip | null>(null);
   const isLoading = ref(false);
-  const error = ref<string | null>(null);
   const _tripGenId = ref<number>(0);
 
   const hasDateRange = computed(() => startDate.value !== null && endDate.value !== null);
@@ -52,6 +51,15 @@ export const useTripStore = defineStore('trip', () => {
     selectedTrip.value = trip;
   }
 
+  function reset(): void {
+    startDate.value     = null;
+    endDate.value       = null;
+    homeStadiumId.value = null;
+    selectedTrip.value  = null;
+    isLoading.value     = false;
+    _tripGenId.value    = 0;
+  }
+
   const tripGenerationRequestId = computed(() => _tripGenId.value);
 
   return {
@@ -59,7 +67,6 @@ export const useTripStore = defineStore('trip', () => {
     endDate,
     selectedTrip,
     isLoading,
-    error,
     hasDateRange,
     setStartDate,
     setEndDate,
@@ -70,5 +77,6 @@ export const useTripStore = defineStore('trip', () => {
     setSelectedTrip,
     tripGenerationRequestId,
     requestTripGeneration,
+    reset,
   };
 });
