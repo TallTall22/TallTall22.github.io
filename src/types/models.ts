@@ -174,3 +174,6 @@ export type TripActionErrorCode =
 
 /** @deprecated Use TripActionErrorCode */
 export type ExportErrorCode = TripActionErrorCode;
+
+// ── F-11: Loading Stage ───────────────────────────────────────────────────────
+export type LoadingStage = 'idle' | 'filtering' | 'routing';

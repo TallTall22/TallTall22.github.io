@@ -1,5 +1,5 @@
 // src/types/components.ts
-import type { ValidationResult, ISODateString, Stadium } from './models';
+import type { ValidationResult, ISODateString, Stadium, LoadingStage } from './models';
 import type { QuickStartPreset, PresetAppliedEvent, PresetRegion } from './presets';
 import type { MapPolylineSegment, StadiumMarkerData } from './map';
 
@@ -89,6 +89,7 @@ export interface MapViewProps {
   isLoading?: boolean;
   hasError?:  boolean;
   errorMsg?:  string | null;
+  onRetry?:   (() => void) | null;
 }
 
 // ── F-06: Map Polyline Layer ──────────────────────────────────────
@@ -158,5 +159,10 @@ export interface TripTimelineStripProps {
 export interface TripActionBarProps {
   /** Disables all buttons when routing/filtering is in progress */
   isBusy?: boolean;
+}
+
+// ── F-11: Loading Stage Bar ───────────────────────────────────────────────────
+export interface LoadingStageBarProps {
+  stage: LoadingStage;
 }
 
