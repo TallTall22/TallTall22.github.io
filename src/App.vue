@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 import StadiumSelector from './components/control-panel/StadiumSelector.vue';
 import QuickStartPresets from './components/control-panel/QuickStartPresets.vue';
@@ -14,23 +14,45 @@ import { useTripShare } from '@/composables/useTripShare';
 import { useLoadingStage } from '@/composables/useLoadingStage';
 import type { RoutingAlgorithmErrorCode } from '@/types/models';
 
+type AppTab = 'plan' | 'map' | 'itinerary';
+
 const store = useTripStore();
 
-// F-04: game filtering pipeline — watches tripGenerationRequestId
+// F-04: game filtering pipeline
 const { filteredGames, isLoading: isFiltering } = useGameFilter();
 
-// F-05: routing algorithm — watches filteredGames, writes store.selectedTrip
-// Passed filteredGames explicitly to prevent a second useGameFilter instance.
+// F-05: routing algorithm
 const { isRouting, routingError } = useRoutingAlgorithm(filteredGames);
 
-// F-10.3: restore trip state from URL param on mount
+// F-10.3: restore trip from URL param on mount
 const { restoreFromUrl } = useTripShare();
 onMounted(() => { restoreFromUrl(); });
 
 const isBusy = computed(() => isFiltering.value || isRouting.value);
 
-// F-11: derive loading stage for the stage bar
+// F-11: loading stage
 const { stage: loadingStage } = useLoadingStage(isFiltering, isRouting);
+
+// ── Tab navigation ──────────────────────────────────────────────────────────
+const activeTab = ref<AppTab>('plan');
+
+// Auto-switch tabs based on trip lifecycle
+watch(() => store.selectedTrip, (newTrip, oldTrip) => {
+  if (newTrip !== null && oldTrip === null) {
+    // Trip generated → show map
+    activeTab.value = 'map';
+  } else if (newTrip === null && oldTrip !== null) {
+    // Trip reset → back to plan
+    activeTab.value = 'plan';
+  }
+});
+
+// Show map tab when routing error occurs so user sees it
+watch(routingError, (err) => {
+  if (err !== null) {
+    activeTab.value = 'map';
+  }
+});
 
 const routingErrorMessage = computed<string | null>(() => {
   if (!routingError.value) return null;
@@ -43,7 +65,6 @@ const routingErrorMessage = computed<string | null>(() => {
   return messages[routingError.value];
 });
 
-// Wire DateRangePicker range-confirmed → trigger routing pipeline
 function onRangeConfirmed(_range: { startDate: string; endDate: string }): void {
   store.requestTripGeneration();
 }
@@ -51,47 +72,74 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
 
 <template>
   <v-app>
-    <v-app-bar color="primary" dark elevation="2">
-      <v-app-bar-title>⚾ MLB Ballpark Tour Planner</v-app-bar-title>
+    <v-app-bar color="primary" elevation="2">
+      <v-app-bar-title class="font-weight-bold">⚾ MLB Ballpark Tour Planner</v-app-bar-title>
     </v-app-bar>
 
-    <v-main class="main-content">
-      <div class="main-layout">
-        <!-- F-11: Loading stage indicator bar -->
+    <v-main class="app-main">
+      <div class="app-layout">
+        <!-- F-11: stage-aware loading indicator -->
         <LoadingStageBar :stage="loadingStage" />
-        <!-- Top: two-column row (control panel + map) -->
-        <v-row no-gutters align="stretch" class="top-row">
-          <!-- Left: Control Panel -->
-          <v-col cols="12" md="5" lg="4" class="control-panel-col">
-            <div class="control-panel-inner pa-4">
-              <!-- F-10: Trip Action Bar (Reset / Export / Share) -->
-              <TripActionBar :is-busy="isBusy" class="mb-4" />
 
-              <!-- F-03: Quick Start Presets -->
-              <QuickStartPresets class="mb-4" :disabled="isBusy" />
+        <!-- Tab bar -->
+        <v-tabs
+          v-model="activeTab"
+          color="primary"
+          align-tabs="center"
+          bg-color="white"
+          density="comfortable"
+          class="app-tabs"
+        >
+          <v-tab value="plan" prepend-icon="mdi-tune-variant">行程規劃</v-tab>
+          <v-tab value="map"  prepend-icon="mdi-map-outline">路線地圖</v-tab>
+          <v-tab
+            value="itinerary"
+            prepend-icon="mdi-calendar-month-outline"
+            :disabled="!store.selectedTrip"
+          >
+            行程表
+          </v-tab>
+        </v-tabs>
 
-              <!-- F-02: Home Stadium Selection -->
-              <StadiumSelector class="mb-4" />
+        <v-divider />
 
-              <!-- F-01: Date Range -->
-              <DateRangePicker :readonly="isBusy" @range-confirmed="onRangeConfirmed" />
-            </div>
-          </v-col>
+        <!-- Panel area -->
+        <div class="panels-area">
+          <v-window v-model="activeTab" class="panels-window">
 
-          <!-- Right: Map -->
-          <v-col cols="12" md="7" lg="8" class="map-col">
-            <MapViewContainer
-              :is-loading="isBusy"
-              :has-error="!!routingError"
-              :error-msg="routingErrorMessage"
-              :on-retry="store.requestTripGeneration"
-            />
-          </v-col>
-        </v-row>
+            <!-- Tab 1: 行程規劃 -->
+            <v-window-item value="plan" class="plan-item">
+              <div class="plan-scroll">
+                <div class="plan-panel">
+                  <!-- F-10: Reset / Export / Share -->
+                  <TripActionBar :is-busy="isBusy" class="mb-6" />
+                  <v-divider class="mb-6" />
+                  <!-- F-03: Quick Start Presets -->
+                  <QuickStartPresets :disabled="isBusy" class="mb-6" />
+                  <!-- F-02: Home Stadium -->
+                  <StadiumSelector class="mb-4" />
+                  <!-- F-01: Date Range -->
+                  <DateRangePicker :readonly="isBusy" @range-confirmed="onRangeConfirmed" />
+                </div>
+              </div>
+            </v-window-item>
 
-        <!-- Bottom: F-08 Timeline Strip -->
-        <div class="timeline-row">
-          <TripTimelineStrip />
+            <!-- Tab 2: 路線地圖 (eager = Leaflet initialises immediately) -->
+            <v-window-item value="map" class="map-item" eager>
+              <MapViewContainer
+                :is-loading="isBusy"
+                :has-error="!!routingError"
+                :error-msg="routingErrorMessage"
+                :on-retry="store.requestTripGeneration"
+              />
+            </v-window-item>
+
+            <!-- Tab 3: 行程表 -->
+            <v-window-item value="itinerary" class="itinerary-item">
+              <TripTimelineStrip />
+            </v-window-item>
+
+          </v-window>
         </div>
       </div>
     </v-main>
@@ -99,75 +147,80 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
 </template>
 
 <style scoped>
-.main-content {
-  padding-top: var(--v-layout-top);
+/* v-main fills the remaining viewport (Vuetify handles padding-top via layout system) */
+.app-main {
   height: 100vh;
 }
 
-.main-layout {
+/* Full-height flex column — stacks LoadingStageBar + tabs + panels */
+.app-layout {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  overflow: hidden;
 }
 
-.top-row {
+.app-tabs {
+  flex-shrink: 0;
+}
+
+/* Panels area fills remaining space after tabs */
+.panels-area {
   flex: 1;
-  min-height: 0; /* allow flex child to shrink below content size */
-  overflow: hidden;
-}
-
-.control-panel-col {
-  overflow-y: auto;
-  border-right: 1px solid rgba(0, 0, 0, 0.12);
-  background: #f5f5f5;
-  height: 100%;
-}
-
-.control-panel-inner {
-  max-width: 480px;
-}
-
-.map-col {
-  height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
-.timeline-row {
-  height: 180px;
-  min-height: 180px;
-  max-height: 180px;
-  overflow: hidden;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fff;
+/* v-window and its internal container must fill panels-area */
+:deep(.panels-window),
+:deep(.panels-window > .v-window__container) {
+  height: 100%;
+}
+
+/* ── Plan tab ───────────────────────────────── */
+.plan-item {
+  height: 100%;
+}
+
+.plan-scroll {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.plan-panel {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+/* ── Map tab ────────────────────────────────── */
+.map-item {
+  height: 100%;
+}
+
+/* ── Itinerary tab ──────────────────────────── */
+.itinerary-item {
+  height: 100%;
+  display: flex;
+  align-items: center;     /* vertically center the timeline strip */
+  overflow-y: auto;
 }
 </style>
 
-<!-- F-10.2: Print stylesheet — hides map/timeline; formats control panel for PDF/print -->
+<!-- Print: hide nav chrome, show plan content only -->
 <style>
 @media print {
-  .map-col,
-  .timeline-row,
-  .v-app-bar {
+  .app-tabs,
+  .v-app-bar,
+  .v-divider {
     display: none !important;
   }
-
-  .control-panel-col {
-    width: 100% !important;
+  .plan-panel {
     max-width: 100% !important;
-    border-right: none !important;
-    overflow: visible !important;
+    padding: 0 !important;
   }
-
-  .main-content {
-    padding-top: 0 !important;
+  .panels-area {
     height: auto !important;
-  }
-
-  .main-layout {
-    height: auto !important;
-  }
-
-  .top-row {
     overflow: visible !important;
   }
 }
