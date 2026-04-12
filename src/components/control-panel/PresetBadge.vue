@@ -25,6 +25,7 @@ function handleClick(): void {
     :aria-label="`套用 ${preset.name} 預設行程，共 ${preset.durationDays} 天`"
     :aria-pressed="isActive"
     @click="handleClick"
+    @keydown.enter="handleClick"
   >
     <span class="preset-emoji mr-1" aria-hidden="true">{{ preset.emoji }}</span>
     <span class="preset-name">{{ preset.name }}</span>
