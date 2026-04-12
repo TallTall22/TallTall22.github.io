@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useTimeline } from '@/composables/useTimeline';
 import TripTimelineCard from './TripTimelineCard.vue';
+import type { TripTimelineStripProps } from '@/types/components';
+
+defineProps<TripTimelineStripProps>();
 
 const { timelineDays, isLoading, error } = useTimeline();
 </script>
@@ -63,7 +66,7 @@ const { timelineDays, isLoading, error } = useTimeline();
   width: 100%;
   /* Custom scrollbar styling */
   scrollbar-width: thin;
-  scrollbar-color: #002D72 #e0e0e0;
+  scrollbar-color: var(--mlb-primary, #002D72) #e0e0e0;
 }
 
 .timeline-scroll-area::-webkit-scrollbar {
@@ -76,7 +79,7 @@ const { timelineDays, isLoading, error } = useTimeline();
 }
 
 .timeline-scroll-area::-webkit-scrollbar-thumb {
-  background: #002D72;
+  background: var(--mlb-primary, #002D72);
   border-radius: 3px;
 }
 

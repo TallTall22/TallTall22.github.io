@@ -1,18 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { TripTimelineCardProps } from '@/types/components';
 
 const props = withDefaults(defineProps<TripTimelineCardProps>(), {
   isActive: false,
 });
 
-function formatDate(isoDate: string): string {
-  const d = new Date(isoDate + 'T12:00:00Z');
+const formattedDate = computed<string>(() => {
+  const d = new Date(props.day.date + 'T12:00:00Z');
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     timeZone: 'UTC',
   }).format(d);
-}
+});
 </script>
 
 <template>
@@ -31,7 +32,7 @@ function formatDate(isoDate: string): string {
         props.day.type === 'game_day' ? 'card-header--game' : 'card-header--travel',
       ]"
     >
-      <span class="card-date">{{ formatDate(props.day.date) }}</span>
+      <span class="card-date">{{ formattedDate }}</span>
       <span class="card-dow">{{ props.day.dayOfWeek }}</span>
     </div>
 
@@ -116,14 +117,14 @@ function formatDate(isoDate: string): string {
 }
 
 .timeline-card--active {
-  outline: 2px solid #002d72;
+  outline: 2px solid var(--mlb-primary, #002D72);
 }
 
 .day-badge {
   position: absolute;
   top: -10px;
   left: 10px;
-  background: #002d72;
+  background: var(--mlb-primary, #002D72);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -145,7 +146,7 @@ function formatDate(isoDate: string): string {
 }
 
 .card-header--game {
-  background: #002d72;
+  background: var(--mlb-primary, #002D72);
   color: #fff;
 }
 
@@ -198,7 +199,7 @@ function formatDate(isoDate: string): string {
 .team-nickname {
   font-size: 11px;
   font-weight: 600;
-  color: #002d72;
+  color: var(--mlb-primary, #002D72);
   max-width: 60px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -208,7 +209,7 @@ function formatDate(isoDate: string): string {
 .matchup-label {
   font-size: 11px;
   font-weight: 600;
-  color: #002d72;
+  color: var(--mlb-primary, #002D72);
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
