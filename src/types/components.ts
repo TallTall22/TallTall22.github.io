@@ -138,7 +138,11 @@ export interface TimelineDayViewModel {
 
 export interface TripTimelineCardProps {
   day:       TimelineDayViewModel;
-  /** Reserved for future click-to-highlight; defaults false */
+  /**
+   * Highlights this card with an MLB-blue outline.
+   * Reserved for F-09 (click-to-select day); not yet wired in TripTimelineStrip.
+   * @default false
+   */
   isActive?: boolean;
 }
 
