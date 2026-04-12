@@ -96,9 +96,8 @@ describe('useRoutingAlgorithm (integration)', () => {
   // ── initial state ───────────────────────────────────────────────────────────
 
   describe('initial state', () => {
-    it('starts with null generatedTrip, isRouting=false, no error', () => {
+    it('starts with isRouting=false, no error', () => {
       const { wrapper } = mountWithComposable();
-      expect(wrapper.vm.generatedTrip).toBeNull();
       expect(wrapper.vm.isRouting).toBe(false);
       expect(wrapper.vm.routingError).toBeNull();
     });
@@ -150,7 +149,6 @@ describe('useRoutingAlgorithm (integration)', () => {
       // Unconditional assertions — will fail if composable is broken
       expect(mockComputeTrip).toHaveBeenCalledOnce();
       expect(wrapper.vm.routingError).toBe('NO_GAMES');
-      expect(wrapper.vm.generatedTrip).toBeNull();
       expect(store.selectedTrip).toBeNull();
       expect(wrapper.vm.isRouting).toBe(false);
     });
@@ -171,7 +169,6 @@ describe('useRoutingAlgorithm (integration)', () => {
       await flushPromises();
 
       expect(mockComputeTrip).toHaveBeenCalledOnce();
-      expect(wrapper.vm.generatedTrip).toStrictEqual(STUB_TRIP_RESULT.trip);
       expect(store.selectedTrip).toStrictEqual(STUB_TRIP_RESULT.trip);
       expect(wrapper.vm.isRouting).toBe(false);
       expect(wrapper.vm.routingError).toBeNull();
@@ -271,7 +268,6 @@ describe('useRoutingAlgorithm (integration)', () => {
 
       // Only the FRESH result (from request 2) should survive — stale request 1 is discarded
       expect(store.selectedTrip?.tripId).toBe('fresh-trip');
-      expect(wrapper.vm.generatedTrip?.tripId).toBe('fresh-trip');
       expect(wrapper.vm.routingError).toBeNull();
       expect(wrapper.vm.isRouting).toBe(false);
       expect(mockComputeTrip).toHaveBeenCalledTimes(2);
