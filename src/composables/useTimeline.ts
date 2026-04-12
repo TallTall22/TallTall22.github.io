@@ -13,9 +13,9 @@ import type { Ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useTripStore } from '@/stores/tripStore';
 import { loadStadiums } from '@/services/stadiumService';
-import { formatLocalTime, deriveDayOfWeek } from '@/utils/timelineUtils';
+import { formatLocalTime, deriveDayOfWeek, extractTimeZoneAbbr } from '@/utils/timelineUtils';
 import type { TimelineDayViewModel } from '@/types/components';
-import type { Stadium, TripDay, GameDay } from '@/types/models';
+import type { Stadium, TripDay } from '@/types/models';
 
 // ── Task 2.1: Return interface ────────────────────────────────────────────────
 
@@ -89,11 +89,10 @@ function mapTripDayToViewModel(
   }
 
   // ── Game Day (TypeScript narrowed via discriminated union) ────────────────
-  const gameDay     = day as GameDay;
-  const gameStadium = stadiumById.get(gameDay.stadiumId);
+  const gameStadium = stadiumById.get(day.stadiumId);
 
-  const homeResolved = resolveTeamByTeamId(gameDay.game.homeTeamId, stadiumByTeamId);
-  const awayResolved = resolveTeamByTeamId(gameDay.game.awayTeamId, stadiumByTeamId);
+  const homeResolved = resolveTeamByTeamId(day.game.homeTeamId, stadiumByTeamId);
+  const awayResolved = resolveTeamByTeamId(day.game.awayTeamId, stadiumByTeamId);
 
   const homeNickname = homeResolved?.nickname ?? 'Unknown';
   const awayNickname = awayResolved?.nickname ?? 'Unknown';
@@ -102,17 +101,17 @@ function mapTripDayToViewModel(
   // Format local time — pass IANA timezone from the resolved stadium
   const timeZone = gameStadium?.timeZone ?? '';
   const localTime = timeZone
-    ? formatLocalTime(gameDay.game.startTimeLocal, timeZone, gameDay.date)
-    : gameDay.game.startTimeLocal;
+    ? formatLocalTime(day.game.startTimeLocal, timeZone, day.date)
+    : day.game.startTimeLocal;
 
-  // Extract timezone abbreviation: "7:05 PM EDT" → "EDT"
-  // Guard: if no space was appended, timeZoneAbbr would equal localTime — treat as null
-  const rawAbbr        = localTime.split(' ').pop() ?? null;
-  const finalTimeZoneAbbr = rawAbbr === localTime ? null : rawAbbr;
+  // Extract timezone abbreviation via Intl (DST-aware); null when no timezone available
+  const finalTimeZoneAbbr: string | null = timeZone
+    ? extractTimeZoneAbbr(timeZone, new Date(`${day.date}T18:00:00Z`)) || null
+    : null;
 
   return {
-    dayNumber:        gameDay.dayNumber,
-    date:             gameDay.date,
+    dayNumber:        day.dayNumber,
+    date:             day.date,
     dayOfWeek,
     type:             'game_day',
     matchupLabel,
