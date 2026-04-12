@@ -81,4 +81,18 @@ describe('MapErrorBanner', () => {
     expect(wrapper.find('.map-error-banner').exists()).toBe(true);
     expect(wrapper.text()).toContain('Error 2');
   });
+
+  it('clicking retry does NOT dismiss the banner', async () => {
+    const onRetry = vi.fn();
+    const wrapper = mount(MapErrorBanner, {
+      ...mountOptions,
+      props: { message: 'Error', onRetry },
+    });
+    const buttons = wrapper.findAll('button');
+    const retryBtn = buttons.find(b => b.text().includes('重試'));
+    await retryBtn!.trigger('click');
+    // Banner must stay visible — only the × close button should dismiss
+    expect(wrapper.find('.map-error-banner').exists()).toBe(true);
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });
