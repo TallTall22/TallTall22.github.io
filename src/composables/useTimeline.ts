@@ -85,6 +85,7 @@ function mapTripDayToViewModel(
       homeTeamNickname: null,
       awayTeamNickname: null,
       distanceKm,
+      stadiumId:        stadiumId ?? null,
     };
   }
 
@@ -124,6 +125,7 @@ function mapTripDayToViewModel(
     homeTeamNickname: homeNickname,
     awayTeamNickname: awayNickname,
     distanceKm,
+    stadiumId:        day.stadiumId,
   };
 }
 
