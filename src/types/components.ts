@@ -101,3 +101,49 @@ export interface MapMarkerLayerProps {
   markers: StadiumMarkerData[];
 }
 
+// ── F-08: Timeline ────────────────────────────────────────────────────────────
+
+export interface TimelineDayViewModel {
+  /** 1-based day number in the itinerary */
+  dayNumber:        number;
+  /** ISO date string "YYYY-MM-DD" */
+  date:             string;
+  /** Day-of-week label derived from date, e.g. "Mon", "Tue" */
+  dayOfWeek:        string;
+  /** Discriminated type — drives card variant rendering */
+  type:             'game_day' | 'travel_day';
+  /** "Away Nickname @ Home Nickname" — null for travel days */
+  matchupLabel:     string | null;
+  /** "7:05 PM ET" — null for travel days */
+  localTime:        string | null;
+  /** IANA timezone abbreviation only, e.g. "ET", "CT" — null for travel days */
+  timeZoneAbbr:     string | null;
+  /** Stadium display name — null for travel days without stadiumId */
+  stadiumName:      string | null;
+  /** City name — null for travel days without stadiumId */
+  city:             string | null;
+  /** logoUrl of home team — empty string if not resolved */
+  homeTeamLogo:     string;
+  /** logoUrl of away team — empty string if not resolved */
+  awayTeamLogo:     string;
+  /** Home team nickname — null for travel days */
+  homeTeamNickname: string | null;
+  /** Away team nickname — null for travel days */
+  awayTeamNickname: string | null;
+  /** Distance from previous day in km — optional, from TripDayBase.distanceFromPrevious */
+  distanceKm:       number | null;
+}
+
+// ── F-08: Timeline Component Props ───────────────────────────────────────────
+
+export interface TripTimelineCardProps {
+  day:       TimelineDayViewModel;
+  /** Reserved for future click-to-highlight; defaults false */
+  isActive?: boolean;
+}
+
+/** TripTimelineStrip reads from useTimeline composable directly (Organism pattern) */
+export interface TripTimelineStripProps {
+  // intentionally empty — Organism reads composable, not props
+}
+
