@@ -6,10 +6,12 @@ import QuickStartPresets from './components/control-panel/QuickStartPresets.vue'
 import TripActionBar from './components/control-panel/TripActionBar.vue';
 import MapViewContainer from '@/components/map/MapViewContainer.vue';
 import TripTimelineStrip from '@/components/timeline/TripTimelineStrip.vue';
+import LoadingStageBar from '@/components/LoadingStageBar.vue';
 import { useTripStore } from '@/stores/tripStore';
 import { useGameFilter } from '@/composables/useGameFilter';
 import { useRoutingAlgorithm } from '@/composables/useRoutingAlgorithm';
 import { useTripShare } from '@/composables/useTripShare';
+import { useLoadingStage } from '@/composables/useLoadingStage';
 import type { RoutingAlgorithmErrorCode } from '@/types/models';
 
 const store = useTripStore();
@@ -26,6 +28,9 @@ const { restoreFromUrl } = useTripShare();
 onMounted(() => { restoreFromUrl(); });
 
 const isBusy = computed(() => isFiltering.value || isRouting.value);
+
+// F-11: derive loading stage for the stage bar
+const { stage: loadingStage } = useLoadingStage(isFiltering, isRouting);
 
 const routingErrorMessage = computed<string | null>(() => {
   if (!routingError.value) return null;
@@ -52,6 +57,8 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
 
     <v-main class="main-content">
       <div class="main-layout">
+        <!-- F-11: Loading stage indicator bar -->
+        <LoadingStageBar :stage="loadingStage" />
         <!-- Top: two-column row (control panel + map) -->
         <v-row no-gutters align="stretch" class="top-row">
           <!-- Left: Control Panel -->
@@ -77,6 +84,7 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
               :is-loading="isBusy"
               :has-error="!!routingError"
               :error-msg="routingErrorMessage"
+              :on-retry="store.requestTripGeneration"
             />
           </v-col>
         </v-row>
