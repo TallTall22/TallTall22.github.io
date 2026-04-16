@@ -19,6 +19,7 @@ const DRIVE_MAX_KM       = 200;   // threshold below which driving is faster tha
 const DRIVE_SPEED_KMH    = 100;   // approximate driving speed (km/h)
 const FLIGHT_SPEED_KMH   = 800;   // approximate cruising speed (km/h)
 const FLIGHT_OVERHEAD_MIN = 120;  // airport overhead: check-in + boarding + deplaning (min)
+const REGIONAL_RADIUS_KM  = 800;  // stadiums within this km of home are "regional"
 
 // Tourism-routing constants (used by scoreGameCandidatesForTourism + buildItinerary)
 const LOOKAHEAD_DAYS              = 3;     // days ahead to scan for future game density
@@ -281,6 +282,74 @@ export function buildItinerary(
           estimatedTravelTime:  estimateTravelMinutes(dist),
         };
         itinerary.push(gameDay);
+      }
+    }
+    dayNumber++;
+  }
+
+  return itinerary;
+}
+
+/**
+ * Region-aware greedy itinerary builder for "快速行程" mode.
+ *
+ * Restricts game candidates to stadiums within REGIONAL_RADIUS_KM of homeStadium.
+ * Uses simple proximity scoring (closest = best) with no look-ahead bonuses.
+ * Days with no regional games become TravelDays.
+ */
+export function buildItineraryRegional(
+  filteredGames: Game[],
+  homeStadium:   Stadium,
+  byTeamId:      Map<string, Stadium>,
+  startDate:     ISODateString,
+  endDate:       ISODateString,
+): TripDay[] {
+  const gamesByDate = new Map<ISODateString, Game[]>();
+  for (const game of filteredGames) {
+    const list = gamesByDate.get(game.date) ?? [];
+    list.push(game);
+    gamesByDate.set(game.date, list);
+  }
+
+  const itinerary:  TripDay[] = [];
+  let dayNumber      = 1;
+  let currentStadium = homeStadium;
+
+  const [sy, sm, sd] = startDate.split('-').map(Number) as [number, number, number];
+  const [ey, em, ed] = endDate.split('-').map(Number)   as [number, number, number];
+  const start = new Date(sy, sm - 1, sd);
+  const end   = new Date(ey, em - 1, ed);
+
+  for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    const dateStr    = formatDateLocal(cursor);
+    const gamesOnDay = gamesByDate.get(dateStr);
+
+    if (!gamesOnDay || gamesOnDay.length === 0) {
+      itinerary.push({ type: 'travel_day', dayNumber, date: dateStr, stadiumId: currentStadium.id });
+    } else {
+      // Filter to regional candidates only (within REGIONAL_RADIUS_KM of home)
+      const allCandidates = scoreGameCandidates(gamesOnDay, currentStadium, byTeamId);
+      const regional = allCandidates.filter(
+        (c) => haversineDistance(homeStadium.coordinates, c.stadium.coordinates) <= REGIONAL_RADIUS_KM,
+      );
+      const candidates = regional.length > 0 ? regional : [];
+
+      if (candidates.length === 0) {
+        itinerary.push({ type: 'travel_day', dayNumber, date: dateStr, stadiumId: currentStadium.id });
+      } else {
+        const best        = candidates.reduce((a, b) => (a.score > b.score ? a : b));
+        const prevStadium = currentStadium;
+        currentStadium    = best.stadium;
+        const dist        = haversineDistance(prevStadium.coordinates, currentStadium.coordinates);
+        itinerary.push({
+          type:                 'game_day',
+          dayNumber,
+          date:                 dateStr,
+          stadiumId:            currentStadium.id,
+          game:                 best.game,
+          distanceFromPrevious: Math.round(dist),
+          estimatedTravelTime:  estimateTravelMinutes(dist),
+        });
       }
     }
     dayNumber++;
