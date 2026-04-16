@@ -34,16 +34,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --no-cache
 
       - name: Type check
         run: npm run type-check
 
       - name: Build
         run: npm run build
+
+      - name: Verify dist directory
+        run: ls -la dist/ && ls -la dist/assets/ || echo "dist/assets not found"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

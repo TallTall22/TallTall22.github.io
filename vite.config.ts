@@ -7,6 +7,12 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   base: '/mlb_field/',
   plugins: [vue()],
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    emptyOutDir: true,
+    reportCompressedSize: false,
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
