@@ -134,11 +134,14 @@ export interface FilteredGamesResult {
 
 // ── F-05: Routing Algorithm Types ────────────────────────────────────────────
 
+export type RoutingMode = 'regional' | 'tourism';
+
 export interface RoutingOptions {
   startDate:     ISODateString;
   endDate:       ISODateString;
   /** Stadium.id (e.g. "NYY") — matches tripStore.homeStadiumId */
   homeStadiumId: string;
+  routingMode:   RoutingMode;
 }
 
 /**
