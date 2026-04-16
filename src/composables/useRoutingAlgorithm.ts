@@ -24,7 +24,7 @@ export interface UseRoutingAlgorithmReturn {
 
 export function useRoutingAlgorithm(filteredGames: Ref<Game[]>): UseRoutingAlgorithmReturn {
   const store = useTripStore();
-  const { homeStadiumId, startDate, endDate } = storeToRefs(store);
+  const { homeStadiumId, startDate, endDate, routingMode } = storeToRefs(store);
 
   const isRouting     = ref<boolean>(false);
   const routingError  = ref<RoutingAlgorithmErrorCode | null>(null);
@@ -53,6 +53,7 @@ export function useRoutingAlgorithm(filteredGames: Ref<Game[]>): UseRoutingAlgor
       startDate:     startDate.value,
       endDate:       endDate.value,
       homeStadiumId: homeStadiumId.value,
+      routingMode:   routingMode.value,
     });
 
     // Race condition guard: a newer request supersedes this one
@@ -70,6 +71,16 @@ export function useRoutingAlgorithm(filteredGames: Ref<Game[]>): UseRoutingAlgor
   // Watch filteredGames — fires after useGameFilter writes its result.
   watch(
     filteredGames,
+    () => {
+      requestCounter++;
+      void runRouting(requestCounter);
+    },
+    { deep: false, immediate: false },
+  );
+
+  // Watch routingMode — re-trigger routing when mode changes.
+  watch(
+    routingMode,
     () => {
       requestCounter++;
       void runRouting(requestCounter);
