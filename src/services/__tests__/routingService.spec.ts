@@ -63,6 +63,7 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-15',
       endDate:       '2026-06-15',
       homeStadiumId: 'NYY',
+      routingMode:   'tourism',
     });
     expect(result.error).toBeNull();
     expect(result.trip).not.toBeNull();
@@ -75,6 +76,7 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-15',
       endDate:       '2026-06-15',
       homeStadiumId: 'NYY',
+      routingMode:   'tourism',
     });
     expect(result.error).toBe('NO_GAMES');
     expect(result.trip).toBeNull();
@@ -87,6 +89,7 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-15',
       endDate:       '2026-06-15',
       homeStadiumId: 'NYY',
+      routingMode:   'tourism',
     });
     expect(result.error).toBe('STADIUM_LOAD_FAILED');
     expect(result.trip).toBeNull();
@@ -97,6 +100,7 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-15',
       endDate:       '2026-06-15',
       homeStadiumId: 'UNKNOWN',
+      routingMode:   'tourism',
     });
     expect(result.error).toBe('NO_HOME_STADIUM');
     expect(result.trip).toBeNull();
@@ -108,6 +112,7 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-15',
       endDate:       '2026-06-17',
       homeStadiumId: 'NYY',
+      routingMode:   'tourism',
     });
     expect(result.error).toBeNull();
     expect(result.totalGamesAttended).toBe(1);
@@ -119,6 +124,7 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-15',
       endDate:       '2026-06-15',
       homeStadiumId: 'NYY',
+      routingMode:   'tourism',
     });
     expect(result.trip?.homeStadiumId).toBe('NYY');
     expect(result.trip?.startDate).toBe('2026-06-15');
@@ -130,6 +136,7 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-20',
       endDate:       '2026-06-15', // end before start → empty loop
       homeStadiumId: 'NYY',
+      routingMode:   'tourism',
     });
     expect(result.error).toBe('EMPTY_ITINERARY');
     expect(result.trip).toBeNull();
@@ -140,7 +147,41 @@ describe('computeTrip()', () => {
       startDate:     '2026-06-15',
       endDate:       '2026-06-15',
       homeStadiumId: 'NYY',
+      routingMode:   'tourism',
     });
     expect(result.trip?.itinerary).toHaveLength(1);
+  });
+
+  it('regional mode: game > 800 km from homeStadium returns error=NO_GAMES', async () => {
+    // LAD is in Los Angeles (lat≈34, lng≈-118); NYY is in New York (~3940 km away).
+    // In regional mode, NYY exceeds the 800 km radius → no game attended → NO_GAMES.
+    const ladStadium = makeStadium({
+      id:          'LAD',
+      teamId:      '119',
+      teamName:    'Los Angeles Dodgers',
+      teamNickname:'Dodgers',
+      stadiumName: 'Dodger Stadium',
+      city:        'Los Angeles',
+      state:       'CA',
+      coordinates: { lat: 34.0739, lng: -118.24 },
+      timeZone:    'America/Los_Angeles',
+      league:      'NL',
+      division:    'NLW',
+      logoUrl:     '/logo/119.svg',
+      stadiumPhotoUrl: '/img/LAD.jpg',
+    });
+    // NYY game is the only game; it is far from LAD
+    const farGame = makeGame({ date: '2026-06-15', homeTeamId: '147' }); // NYY (~3940 km from LAD)
+    mockLoadStadiums.mockResolvedValue({ stadiums: [ladStadium, makeStadium()], error: null });
+
+    const result = await computeTrip([farGame], {
+      startDate:     '2026-06-15',
+      endDate:       '2026-06-15',
+      homeStadiumId: 'LAD',
+      routingMode:   'regional',
+    });
+    // NYY is outside 800 km of LAD → filtered out → 0 games attended → NO_GAMES
+    expect(result.error).toBe('NO_GAMES');
+    expect(result.trip).toBeNull();
   });
 });

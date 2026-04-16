@@ -10,6 +10,7 @@ import {
   scoreGameCandidates,
   scoreGameCandidatesForTourism,
   buildItinerary,
+  buildItineraryRegional,
   assembleTripFromItinerary,
 } from '@/utils/routingAlgorithm';
 import type { LookaheadContext } from '@/utils/routingAlgorithm';
@@ -66,6 +67,8 @@ function makeGame(overrides: Partial<Game> = {}): Game {
 const NYY = makeStadium({ id: 'NYY', teamId: '147', coordinates: { lat: 40.8296, lng: -73.9262 } });
 const BOS = makeStadium({ id: 'BOS', teamId: '111', coordinates: { lat: 42.3467, lng: -71.0972 } });
 const LAD = makeStadium({ id: 'LAD', teamId: '119', coordinates: { lat: 34.0739, lng: -118.24 } });
+// San Francisco Giants — ~560 km north of LAD, well within REGIONAL_RADIUS_KM (800 km)
+const SFG = makeStadium({ id: 'SFG', teamId: '137', coordinates: { lat: 37.7786, lng: -122.3893 } });
 
 // ── haversineDistance ─────────────────────────────────────────────────────────
 
@@ -412,7 +415,7 @@ describe('buildItinerary() — tourism revisit avoidance', () => {
 
 
 describe('assembleTripFromItinerary()', () => {
-  const opts: RoutingOptions = { startDate: '2026-06-01', endDate: '2026-06-03', homeStadiumId: 'NYY' };
+  const opts: RoutingOptions = { startDate: '2026-06-01', endDate: '2026-06-03', homeStadiumId: 'NYY', routingMode: 'tourism' };
 
   it('sets correct start/end/homeStadiumId', () => {
     const trip = assembleTripFromItinerary([], opts);
@@ -449,5 +452,70 @@ describe('assembleTripFromItinerary()', () => {
     const g    = makeGame({ date: '2026-06-01', homeTeamId: '111' }); // BOS
     const iter = buildItinerary([g], NYY, buildStadiumByTeamIdMap([NYY, BOS]), '2026-06-01', '2026-06-01');
     expect(assembleTripFromItinerary(iter, opts).totalDistance).toBeGreaterThan(0);
+  });
+});
+
+// ── buildItineraryRegional ────────────────────────────────────────────────────
+
+describe('buildItineraryRegional()', () => {
+  // LA (LAD) is the homeStadium for all regional tests.
+  // REGIONAL_RADIUS_KM = 800 (mirrored from routingAlgorithm.ts)
+  const REGIONAL_RADIUS_KM = 800;
+
+  it('game in NY (~3940 km from LA) becomes a TravelDay — out of regional radius', () => {
+    // NYY is ~3940 km from LAD, well beyond the 800 km regional radius
+    const nyGame = makeGame({ gameId: 'ny-001', date: '2026-06-01', homeTeamId: '147' }); // NYY
+    const r = buildItineraryRegional(
+      [nyGame],
+      LAD,
+      buildStadiumByTeamIdMap([LAD, NYY]),
+      '2026-06-01',
+      '2026-06-01',
+    );
+    expect(r).toHaveLength(1);
+    // NYY is beyond 800 km → no regional candidate → TravelDay
+    expect(r[0]!.type).toBe('travel_day');
+    // sanity-check: distance really is > REGIONAL_RADIUS_KM
+    expect(haversineDistance(LAD.coordinates, NYY.coordinates)).toBeGreaterThan(REGIONAL_RADIUS_KM);
+  });
+
+  it('game in SF (~560 km from LA) is included as a GameDay — within regional radius', () => {
+    // SFG is ~560 km from LAD, within the 800 km regional radius
+    const sfGame = makeGame({ gameId: 'sf-001', date: '2026-06-01', homeTeamId: '137' }); // SFG
+    const r = buildItineraryRegional(
+      [sfGame],
+      LAD,
+      buildStadiumByTeamIdMap([LAD, SFG]),
+      '2026-06-01',
+      '2026-06-01',
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0]!.type).toBe('game_day');
+    if (r[0]!.type === 'game_day') {
+      expect(r[0]!.stadiumId).toBe('SFG');
+    }
+    // sanity-check: distance really is ≤ REGIONAL_RADIUS_KM
+    expect(haversineDistance(LAD.coordinates, SFG.coordinates)).toBeLessThan(REGIONAL_RADIUS_KM);
+  });
+
+  it('picks the closer regional game when two games are on the same day', () => {
+    // LAD (0 km from home) vs SFG (~560 km) — both within 800 km.
+    // scoreGameCandidates gives higher score to closer stadium (MAX_REACH_KM − distanceKm),
+    // so LAD should win as it is 0 km away.
+    const ladGame = makeGame({ gameId: 'lad-001', date: '2026-06-01', homeTeamId: '119' }); // LAD (0 km)
+    const sfGame  = makeGame({ gameId: 'sf-002',  date: '2026-06-01', homeTeamId: '137' }); // SFG (~560 km)
+    const r = buildItineraryRegional(
+      [ladGame, sfGame],
+      LAD,
+      buildStadiumByTeamIdMap([LAD, SFG]),
+      '2026-06-01',
+      '2026-06-01',
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0]!.type).toBe('game_day');
+    if (r[0]!.type === 'game_day') {
+      // LAD is closer → higher score → selected
+      expect(r[0]!.stadiumId).toBe('LAD');
+    }
   });
 });
