@@ -134,16 +134,21 @@ export interface FilteredGamesResult {
 
 // ── F-05: Routing Algorithm Types ────────────────────────────────────────────
 
+export type RoutingMode = 'regional' | 'tourism';
+
 export interface RoutingOptions {
   startDate:     ISODateString;
   endDate:       ISODateString;
   /** Stadium.id (e.g. "NYY") — matches tripStore.homeStadiumId */
   homeStadiumId: string;
+  routingMode:   RoutingMode;
 }
 
 /**
  * A game candidate scored during the greedy pass.
- * score > 0 means reachable; higher = closer = better.
+ * Higher score = better candidate. Score includes proximity, look-ahead bonus, and
+ * revisit penalty — see scoreGameCandidatesForTourism for the full calculation.
+ * Score may be negative when all candidates are revisited stadiums.
  */
 export interface ScoredCandidate {
   game:       Game;
@@ -174,3 +179,6 @@ export type TripActionErrorCode =
 
 /** @deprecated Use TripActionErrorCode */
 export type ExportErrorCode = TripActionErrorCode;
+
+// ── F-11: Loading Stage ───────────────────────────────────────────────────────
+export type LoadingStage = 'idle' | 'filtering' | 'routing';

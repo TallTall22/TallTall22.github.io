@@ -1,7 +1,7 @@
 // src/stores/tripStore.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { ISODateString, Trip } from '@/types';
+import type { ISODateString, Trip, RoutingMode } from '@/types';
 
 export const useTripStore = defineStore('trip', () => {
   const startDate = ref<ISODateString | null>(null);
@@ -9,6 +9,7 @@ export const useTripStore = defineStore('trip', () => {
   const homeStadiumId = ref<string | null>(null);
   const selectedTrip = ref<Trip | null>(null);
   const _tripGenId   = ref<number>(0);
+  const routingMode  = ref<RoutingMode>('regional');
 
   const hasDateRange= computed(() => startDate.value !== null && endDate.value !== null);
   const hasHomeStadium = computed(() => homeStadiumId.value !== null);
@@ -46,6 +47,10 @@ export const useTripStore = defineStore('trip', () => {
     }
   }
 
+  function setRoutingMode(mode: RoutingMode): void {
+    routingMode.value = mode;
+  }
+
   function setSelectedTrip(trip: Trip | null): void {
     selectedTrip.value = trip;
   }
@@ -56,6 +61,7 @@ export const useTripStore = defineStore('trip', () => {
     homeStadiumId.value = null;
     selectedTrip.value  = null;
     _tripGenId.value    = 0;
+    routingMode.value   = 'regional';
   }
 
   const tripGenerationRequestId = computed(() => _tripGenId.value);
@@ -74,6 +80,8 @@ export const useTripStore = defineStore('trip', () => {
     setSelectedTrip,
     tripGenerationRequestId,
     requestTripGeneration,
+    routingMode,
+    setRoutingMode,
     reset,
   };
 });

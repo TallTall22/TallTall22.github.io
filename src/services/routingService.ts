@@ -4,6 +4,7 @@ import {
   buildStadiumByTeamIdMap,
   buildStadiumByIdMap,
   buildItinerary,
+  buildItineraryRegional,
   assembleTripFromItinerary,
 } from '@/utils/routingAlgorithm';
 import type { Game, RoutingOptions, RoutingResult } from '@/types/models';
@@ -39,13 +40,9 @@ export async function computeTrip(
     return { trip: null, error: 'NO_HOME_STADIUM', totalGamesAttended: 0, totalTravelDays: 0 };
   }
 
-  const itinerary = buildItinerary(
-    filteredGames,
-    homeStadium,
-    byTeamId,
-    options.startDate,
-    options.endDate,
-  );
+  const itinerary = options.routingMode === 'regional'
+    ? buildItineraryRegional(filteredGames, homeStadium, byTeamId, options.startDate, options.endDate)
+    : buildItinerary(filteredGames, homeStadium, byTeamId, options.startDate, options.endDate);
 
   // Guard: algorithm must produce at least one day (shouldn't happen with valid inputs)
   if (itinerary.length === 0) {

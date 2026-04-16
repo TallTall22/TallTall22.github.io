@@ -2,6 +2,7 @@
 import { useTimeline } from '@/composables/useTimeline';
 import { useHighlightStore } from '@/stores/highlightStore';
 import TripTimelineCard from './TripTimelineCard.vue';
+import TimelineSkeletonStrip from './TimelineSkeletonStrip.vue';
 import type { TripTimelineStripProps } from '@/types/components';
 
 defineProps<TripTimelineStripProps>();
@@ -14,9 +15,7 @@ const highlightStore = useHighlightStore();
   <div class="timeline-strip-wrapper">
     <!-- Loading state -->
     <template v-if="isLoading">
-      <div class="timeline-loading">
-        <v-progress-linear indeterminate color="primary" />
-      </div>
+      <TimelineSkeletonStrip />
     </template>
 
     <!-- Error state -->
@@ -89,11 +88,6 @@ const highlightStore = useHighlightStore();
 .timeline-scroll-area::-webkit-scrollbar-thumb {
   background: var(--mlb-primary, #002D72);
   border-radius: 3px;
-}
-
-.timeline-loading {
-  width: 100%;
-  padding: 16px;
 }
 
 .timeline-error {
