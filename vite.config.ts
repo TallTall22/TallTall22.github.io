@@ -5,7 +5,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/mlb_field/',
+  base: '/',
   plugins: [vue()],
   build: {
     outDir: 'dist',
