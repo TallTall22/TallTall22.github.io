@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import DateRangePicker from './components/control-panel/DateRangePicker.vue';
 import StadiumSelector from './components/control-panel/StadiumSelector.vue';
+import RoutingModeSelector from './components/control-panel/RoutingModeSelector.vue';
 import QuickStartPresets from './components/control-panel/QuickStartPresets.vue';
 import TripActionBar from './components/control-panel/TripActionBar.vue';
 import MapViewContainer from '@/components/map/MapViewContainer.vue';
@@ -118,6 +119,8 @@ function onRangeConfirmed(_range: { startDate: string; endDate: string }): void 
                   <QuickStartPresets :disabled="isBusy" class="mb-6" />
                   <!-- F-02: Home Stadium -->
                   <StadiumSelector class="mb-4" />
+                  <!-- F-05: Routing Mode -->
+                  <RoutingModeSelector :disabled="isBusy" class="mb-4" />
                   <!-- F-01: Date Range -->
                   <DateRangePicker :readonly="isBusy" @range-confirmed="onRangeConfirmed" />
                 </div>
